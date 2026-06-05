@@ -22,25 +22,34 @@ standard pay rail — into one composable economic layer.
 
 ## The loop
 
-```
-   trade (Byreal / RealClaw)          ┌──────────────────────────────┐
-            │  PnL, positions          │  every box below is a        │
-            ▼                          │  verifiable Mantle event     │
-   Reputation Engine  ── commits R ──▶ │                              │
-   (recency-decayed,                   │  ReputationOracle  (R, tier) │
-    Sybil-gated)                       │          │                   │
-            │                          │          ▼                   │
-            │                          │  CreditManager  (tier→limit) │
-            │                          │          │ draw              │
-            │                          │          ▼                   │
-            │                          │  CreditVault  (ERC-4626)     │
-            │                          │          │ disburse          │
-            ▼                          │          ▼                   │
-   Smart Account ── SpendingGuard ──▶  │  allowed tx  ✅ executes      │
-   (per-tx / daily / allowlist)        │  rogue tx    ❌ REVERTS       │
-            │                          └──────────────────────────────┘
-            ▼
-   x402 agent-to-agent payments (USDC/MNT) ── proof-of-payment ──▶ ERC-8004 feedback
+```mermaid
+graph LR
+  Trade["🤖 trade via<br/>Byreal / RealClaw"] -->|PnL, positions| Engine["Reputation Engine<br/>recency-decayed · Sybil-gated"]
+
+  subgraph onchain["⛓️ on Mantle — every box is a verifiable event"]
+    direction TB
+    Oracle["ReputationOracle<br/>R · tier"]
+    Manager["CreditManager<br/>tier → limit"]
+    Vault["CreditVault<br/>ERC-4626 pool"]
+    Account["Smart Account<br/>+ SpendingGuard"]
+    Allowed["✅ allowed tx executes"]
+    Rogue["❌ rogue tx REVERTS"]
+    Oracle -->|tier| Manager
+    Manager -->|draw| Vault
+    Vault -->|disburse| Account
+    Account --> Allowed
+    Account --> Rogue
+  end
+
+  Engine -->|commits R| Oracle
+  Account -->|"x402 (USDC / MNT)"| Pay["agent-to-agent<br/>payment"]
+  Pay -->|proof-of-payment| Feedback["ERC-8004<br/>feedback"]
+  Feedback -.->|enriches| Engine
+
+  classDef ok fill:#16a34a,stroke:#15803d,color:#ffffff;
+  classDef bad fill:#dc2626,stroke:#b91c1c,color:#ffffff;
+  class Allowed ok;
+  class Rogue bad;
 ```
 
 ## Pieces
