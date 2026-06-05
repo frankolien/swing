@@ -20,7 +20,7 @@ function winningTrades(count: number, startDaysAgo: number): Trade[] {
     win: true,
   }));
 }
-
+//wair oo
 function baseInputs(over: Partial<ScoreInputs> = {}): ScoreInputs {
   return {
     trades: winningTrades(20, 12),
