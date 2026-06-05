@@ -1,4 +1,4 @@
-import type { TierId } from "./tiers.js";
+import type { TierId } from "./tiers";
 
 /** Mirror of SpendingGuardLib reason codes (the order `enforce` reverts in). */
 export enum SpendReason {

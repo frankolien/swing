@@ -1,3 +1,3 @@
-export * from "./tiers.js";
-export * from "./config.js";
-export * from "./types.js";
+export * from "./tiers";
+export * from "./config";
+export * from "./types";

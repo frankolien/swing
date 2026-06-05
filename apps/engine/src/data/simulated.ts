@@ -19,25 +19,27 @@ export class SimulatedSource implements DataSource {
   readonly kind = "simulated";
   private agents = new Map<string, AgentState>();
 
-  private seed(agentId: bigint, now: number): AgentState {
-    // 10 trades over the last ~40 days: a 60% win rate with real drawdowns -> high T2.
-    const pnls = [120, -90, 140, 80, -110, 95, 130, -70, 60, 150];
+  private seed(now: number): AgentState {
+    // 14 trades over ~45 days: ~86% win rate, shallow drawdowns -> solid T3 baseline that
+    // `earn` then pushes higher (no dip against an already-strong on-chain score).
+    const pnls = [150, 150, -40, 150, 160, 150, 140, 150, -40, 150, 160, 150, 150, 150];
     const trades: Trade[] = pnls.map((pnl, i) => ({
-      timestamp: now - (40 - i * 3) * DAY,
+      timestamp: now - (45 - i * 3) * DAY,
       pnl,
-      ret: pnl / 2000,
+      ret: pnl > 0 ? 0.05 : -0.015,
       win: pnl > 0,
     }));
     const validations: ValidationEvent[] = [
-      { timestamp: now - 5 * DAY, response: 82 },
-      { timestamp: now - 2 * DAY, response: 88 },
+      { timestamp: now - 6 * DAY, response: 92 },
+      { timestamp: now - 3 * DAY, response: 95 },
+      { timestamp: now - 1 * DAY, response: 94 },
     ];
     return {
       trades,
       validations,
-      jobsCompleted: 9,
-      accountAgeDays: 95,
-      passportScore: 22,
+      jobsCompleted: 28,
+      accountAgeDays: 220,
+      passportScore: 28,
       earned: 0,
     };
   }
@@ -46,7 +48,7 @@ export class SimulatedSource implements DataSource {
     const key = agentId.toString();
     let s = this.agents.get(key);
     if (!s) {
-      s = this.seed(agentId, now);
+      s = this.seed(now);
       this.agents.set(key, s);
     }
     return s;
