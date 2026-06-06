@@ -1,37 +1,39 @@
 @import "tailwindcss";
 
+/* Monochrome dark canvas — ported from entrypoint-labs-website's oklch system.
+   Color is reserved: red = rogue / blocked, otherwise white/gray. Trust tiers read as
+   brightness (T0 dim gray -> T3 pure white). */
 @theme {
-  /* dark web3 canvas */
-  --color-paper: #07080b;
-  --color-paper-2: #0d0f14;
-  --color-card: #0f1218;
-  --color-card-2: #14181f;
-  --color-ink: #f3f5f8;
-  --color-muted: #9aa3b2;
-  --color-faint: #6a7280;
-  --color-line: #1b1f27;
-  --color-line-strong: #2a2f39;
+  --color-paper: oklch(0.145 0 0);
+  --color-paper-2: oklch(0.205 0 0);
+  --color-card: oklch(0.178 0 0);
+  --color-card-2: oklch(0.225 0 0);
+  --color-ink: oklch(0.985 0 0);
+  --color-muted: oklch(0.78 0 0);
+  --color-faint: oklch(0.6 0 0);
+  --color-line: oklch(0.27 0 0);
+  --color-line-strong: oklch(0.37 0 0);
 
-  /* emerald = trusted / allowed / credit · rose = rogue / blocked */
-  --color-accent: #34d399;
-  --color-accent-2: #0ea968;
-  --color-accent-soft: #0f2a20;
-  --color-danger: #fb7185;
-  --color-danger-soft: #2a1419;
-  --color-gold: #fbbf24;
+  /* "accent" is monochrome white (primary / allowed); danger is the only hue */
+  --color-accent: oklch(0.985 0 0);
+  --color-accent-2: oklch(0.9 0 0);
+  --color-accent-soft: oklch(0.27 0 0);
+  --color-danger: oklch(0.71 0.19 23);
+  --color-danger-soft: oklch(0.26 0.07 24);
+  --color-gold: oklch(0.8 0.12 85);
 
-  /* reputation tiers (brightened for dark) */
-  --color-t0: #9ca3af;
-  --color-t1: #f59e0b;
-  --color-t2: #60a5fa;
-  --color-t3: #34d399;
+  /* tiers as brightness ramp */
+  --color-t0: oklch(0.6 0 0);
+  --color-t1: oklch(0.72 0 0);
+  --color-t2: oklch(0.84 0 0);
+  --color-t3: oklch(0.985 0 0);
 
-  --font-display: var(--font-space), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --radius-card: 16px;
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 16px 40px -20px rgba(0, 0, 0, 0.7);
+  --radius-card: 12px;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 20px 50px -28px rgba(0, 0, 0, 0.8);
 }
 
 @layer base {
@@ -44,35 +46,18 @@
     color: var(--color-ink);
     font-family: var(--font-sans);
   }
-  /* ambient corner glows */
+  /* a faint top vignette over the starfield canvas */
   body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    background:
-      radial-gradient(55% 45% at 12% -5%, rgba(52, 211, 153, 0.12), transparent 60%),
-      radial-gradient(45% 40% at 100% 0%, rgba(99, 102, 241, 0.1), transparent 55%),
-      radial-gradient(40% 45% at 95% 100%, rgba(244, 114, 128, 0.05), transparent 60%);
-  }
-  /* faint grid, faded toward the page body */
-  body::after {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
-    background-size: 58px 58px;
-    -webkit-mask-image: radial-gradient(circle at 50% 0%, black, transparent 72%);
-    mask-image: radial-gradient(circle at 50% 0%, black, transparent 72%);
+    background: radial-gradient(80% 50% at 50% -10%, rgba(255, 255, 255, 0.05), transparent 60%);
   }
   ::selection {
-    background: var(--color-accent);
-    color: #06251a;
+    background: var(--color-ink);
+    color: var(--color-paper);
   }
   h1, h2, h3 {
     font-family: var(--font-display);
@@ -86,8 +71,7 @@
 
 @layer components {
   .card {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 30%), var(--color-card);
+    background: var(--color-card);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
@@ -97,7 +81,7 @@
   }
   .label {
     font-size: 11px;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--color-faint);
     font-weight: 500;
@@ -112,15 +96,15 @@
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    font-weight: 600;
-    color: var(--color-accent);
-    background: var(--color-accent-soft);
-    border: 1px solid rgba(52, 211, 153, 0.22);
+    font-weight: 500;
+    color: var(--color-muted);
+    background: transparent;
+    border: 1px solid var(--color-line-strong);
     border-radius: 999px;
     padding: 0.3rem 0.7rem;
   }
   .ring-ink:focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 1px solid var(--color-line-strong);
     outline-offset: 2px;
   }
 }

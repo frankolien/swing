@@ -1,5 +1,5 @@
 import type { ScoreInputs, Trade, ValidationEvent } from "../scoring.js";
-import type { DataSource } from "./source.js";
+import type { DataSource, TradeView, TrackRecord } from "./source.js";
 
 const DAY = 86_400;
 
@@ -66,19 +66,66 @@ export class SimulatedSource implements DataSource {
     };
   }
 
-  earn(agentId: bigint, now: number, count = 4): void {
+  getTrack(agentId: bigint, now: number): TrackRecord {
+    const s = this.state(agentId, now);
+    const trades = s.trades;
+
+    const realizedPnl = trades.reduce((a, t) => a + t.pnl, 0);
+    const wins = trades.filter((t) => t.win).length;
+    const winRate = trades.length ? wins / trades.length : 0;
+
+    let eq = 0;
+    const equity = trades.map((t) => (eq += t.pnl));
+    let peak = 0;
+    let maxDrawdown = 0;
+    for (const e of equity) {
+      if (e > peak) peak = e;
+      if (peak > 0) maxDrawdown = Math.max(maxDrawdown, (peak - e) / peak);
+    }
+
+    const rets = trades.map((t) => t.ret);
+    const mean = rets.reduce((a, b) => a + b, 0) / (rets.length || 1);
+    const variance = rets.reduce((a, b) => a + (b - mean) ** 2, 0) / (rets.length || 1);
+    const sharpe = variance > 0 ? mean / Math.sqrt(variance) : 0;
+
+    const view: TradeView[] = trades
+      .slice(-14)
+      .reverse()
+      .map((t) => ({ timestamp: t.timestamp, pnl: t.pnl, win: t.win }));
+
+    return {
+      venue: "Byreal · RealClaw",
+      trades: view,
+      summary: { count: trades.length, winRate, realizedPnl, sharpe, maxDrawdown, equity },
+    };
+  }
+
+  earn(agentId: bigint, now: number, count = 4): TradeView[] {
     const s = this.state(agentId, now);
     const rets = [0.05, 0.055, 0.06];
+    const pnls = [180, 220, 160, 240];
+    const made: TradeView[] = [];
     for (let i = 0; i < count; i++) {
-      s.trades.push({
-        timestamp: now - i * 60, // fresh trades, minutes apart
-        pnl: 180,
+      const trade: Trade = {
+        timestamp: now - i * 90, // fresh trades, minutes apart
+        pnl: pnls[i % pnls.length]!,
         ret: rets[i % 3]!,
         win: true,
-      });
+      };
+      s.trades.push(trade);
+      made.push({ timestamp: trade.timestamp, pnl: trade.pnl, win: trade.win });
     }
     s.validations.push({ timestamp: now, response: 96 });
     s.jobsCompleted += 2;
     s.earned += 1;
+    return made;
+  }
+
+  /// A paid x402 job is independent evidence the agent delivered value: a fresh validation
+  /// (high response) plus a completed job. Feeds the next recompute the same way trades do.
+  recordPaidJob(agentId: bigint, now: number): void {
+    const s = this.state(agentId, now);
+    s.validations.push({ timestamp: now, response: 97 });
+    s.jobsCompleted += 1;
   }
 }

@@ -75,7 +75,7 @@ export function ReputationGauge({
           initial={{ strokeDashoffset: 1 }}
           animate={{ strokeDashoffset: 1 - fraction }}
           transition={{ type: "spring", stiffness: 60, damping: 18 }}
-          style={{ filter: `drop-shadow(0 2px 7px ${hex}59)` }}
+          style={{ filter: `drop-shadow(0 1px 6px ${hex}33)` }}
         />
       </svg>
 

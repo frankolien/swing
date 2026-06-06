@@ -2,15 +2,21 @@
 
 import { TIERS } from "@swing/shared";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ShieldCheck, ShieldX, X } from "lucide-react";
+import { Check, Loader2, ShieldCheck, ShieldX } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { DEMO, txUrl } from "@/lib/config";
-import { encodeTransfer } from "@/lib/encode";
+import { DEMO } from "@/lib/config";
 import { isZero, usd } from "@/lib/format";
 import { Card, ExplorerLink, Label } from "./ui";
 
-type Verdict = { ok: boolean; label: string; amount: number; to: "merchant" | "attacker" } | null;
+type Target = "merchant" | "attacker";
+type Verdict = {
+  ok: boolean;
+  label: string;
+  amount: number;
+  to: Target;
+  txHash: string;
+} | null;
 
 export function SpendingControls({
   account,
@@ -26,16 +32,18 @@ export function SpendingControls({
   const t = TIERS[Math.min(3, tier)]!;
   const ready = !isZero(account) && !!usdcAddress;
 
-  async function simulate(to: "merchant" | "attacker", amountUsd: number) {
-    if (!ready) return;
+  // Submit a REAL spend through the GuardedAccount. An allowlisted, in-bounds transfer executes;
+  // a rogue or oversized one mines as a reverted tx — the on-chain proof, generated on click.
+  async function execute(to: Target, amountUsd: number) {
+    if (!ready || busy) return;
     const key = `${to}-${amountUsd}`;
     setBusy(key);
+    setVerdict(null);
     try {
-      const data = encodeTransfer(DEMO[to], BigInt(Math.round(amountUsd * 1e6)));
-      const res = await api.previewSpend({ account, target: usdcAddress!, value: "0", data });
-      setVerdict({ ok: res.reason === 0, label: res.label, amount: amountUsd, to });
+      const res = await api.spend({ account, to: DEMO[to], amountUsd });
+      setVerdict({ ok: res.ok, label: res.label, amount: amountUsd, to, txHash: res.txHash });
     } catch {
-      setVerdict({ ok: false, label: "Engine unreachable", amount: amountUsd, to });
+      setVerdict(null);
     } finally {
       setBusy(null);
     }
@@ -77,99 +85,136 @@ export function SpendingControls({
           </div>
           <p className="text-xs leading-relaxed text-faint">
             The guard meters every outbound call on-chain. Anything off-allowlist or over a cap
-            reverts in the transaction — funds never move.
+            reverts inside the transaction — funds never move. Each button below submits a{" "}
+            <span className="text-ink">real transaction</span> to Mantle Sepolia.
           </p>
         </div>
 
-        {/* simulator */}
+        {/* live executor */}
         <div className="p-6">
-          <Label>Try a spend</Label>
+          <Label>Execute a spend</Label>
           <div className="mt-3 grid gap-2">
-            <SimButton
+            <SpendButton
               label="Pay merchant"
               sub="$1,000 · allowlisted"
-              busy={busy === "merchant-1000"}
-              onClick={() => simulate("merchant", 1000)}
+              pending={busy === "merchant-1000"}
+              disabled={!!busy}
+              onClick={() => execute("merchant", 1000)}
             />
-            <SimButton
+            <SpendButton
               label="Drain to attacker"
               sub="$1,000 · not allowlisted"
               danger
-              busy={busy === "attacker-1000"}
-              onClick={() => simulate("attacker", 1000)}
+              pending={busy === "attacker-1000"}
+              disabled={!!busy}
+              onClick={() => execute("attacker", 1000)}
             />
-            <SimButton
+            <SpendButton
               label="Oversized payout"
               sub={`$${(t.perTxUsd + 5000).toLocaleString()} · over per-tx cap`}
               danger
-              busy={busy === `merchant-${t.perTxUsd + 5000}`}
-              onClick={() => simulate("merchant", t.perTxUsd + 5000)}
+              pending={busy === `merchant-${t.perTxUsd + 5000}`}
+              disabled={!!busy}
+              onClick={() => execute("merchant", t.perTxUsd + 5000)}
             />
           </div>
 
-          <div className="mt-4 min-h-[84px]">
+          <div className="mt-4 min-h-[96px]">
             <AnimatePresence mode="wait">
-              {verdict && (
+              {busy ? (
                 <motion.div
-                  key={`${verdict.to}-${verdict.label}`}
+                  key="pending"
                   initial={{ opacity: 0, y: 8 }}
-                  animate={verdict.ok ? { opacity: 1, y: 0 } : { opacity: 1, y: 0, x: [0, -6, 6, -4, 4, 0] }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.34 }}
-                  className={`flex items-start gap-3 rounded-2xl border p-4 ${
-                    verdict.ok
-                      ? "border-accent/30 bg-accent-soft"
-                      : "border-danger/30 bg-danger-soft"
-                  }`}
+                  className="flex items-center gap-3 rounded-2xl border hairline bg-paper-2/40 p-4"
                 >
-                  {verdict.ok ? (
-                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                  ) : (
-                    <ShieldX className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
-                  )}
+                  <Loader2 className="h-5 w-5 shrink-0 animate-spin text-faint" />
                   <div>
-                    <div className={`text-sm font-semibold ${verdict.ok ? "text-accent" : "text-danger"}`}>
-                      {verdict.ok ? "Allowed — executes" : "Blocked — reverts on-chain"}
+                    <div className="text-sm font-medium text-ink">Submitting to Mantle…</div>
+                    <div className="mt-0.5 text-xs text-faint">
+                      signing + mining the transaction (~10s)
                     </div>
-                    <div className="mt-0.5 text-xs text-ink/70">{verdict.label}</div>
                   </div>
                 </motion.div>
+              ) : (
+                verdict && (
+                  <motion.div
+                    key={`${verdict.to}-${verdict.txHash}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={
+                      verdict.ok
+                        ? { opacity: 1, y: 0 }
+                        : { opacity: 1, y: 0, x: [0, -6, 6, -4, 4, 0] }
+                    }
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.34 }}
+                    className={`flex items-start gap-3 rounded-2xl border p-4 ${
+                      verdict.ok ? "border-accent/30 bg-accent-soft" : "border-danger/30 bg-danger-soft"
+                    }`}
+                  >
+                    {verdict.ok ? (
+                      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    ) : (
+                      <ShieldX className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className={`text-sm font-semibold ${
+                          verdict.ok ? "text-accent" : "text-danger"
+                        }`}
+                      >
+                        {verdict.ok ? "Allowed — executed on-chain" : "Blocked — reverted on-chain"}
+                      </div>
+                      <div className="mt-0.5 text-xs text-ink/70">{verdict.label}</div>
+                      <div className="mt-2 flex items-center gap-2 text-xs">
+                        <span
+                          className={`tnum rounded-full px-2 py-0.5 ${
+                            verdict.ok
+                              ? "bg-accent/10 text-accent"
+                              : "bg-danger/10 text-danger"
+                          }`}
+                        >
+                          status {verdict.ok ? "1 · success" : "0 · reverted"}
+                        </span>
+                        <ExplorerLink hash={verdict.txHash} kind="tx" />
+                      </div>
+                    </div>
+                  </motion.div>
+                )
               )}
             </AnimatePresence>
           </div>
 
-          <a
-            href={txUrl(DEMO.rogueTx)}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-1.5 text-xs text-faint transition-colors hover:text-ink"
-          >
-            <X className="h-3 w-3 text-danger" />
-            Not a mock — a real reverted rogue tx on Mantle ↗
-          </a>
+          <p className="mt-2 text-[11px] leading-relaxed text-faint">
+            No mocks — every verdict above is a transaction mined on Mantle Sepolia. The reverts
+            carry the guard&apos;s typed error; click through to the explorer to verify status.
+          </p>
         </div>
       </div>
     </Card>
   );
 }
 
-function SimButton({
+function SpendButton({
   label,
   sub,
   onClick,
-  busy,
+  pending,
+  disabled = false,
   danger = false,
 }: {
   label: string;
   sub: string;
   onClick: () => void;
-  busy?: boolean;
+  pending?: boolean;
+  disabled?: boolean;
   danger?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      disabled={busy}
+      disabled={disabled}
       className={`ring-ink group flex items-center justify-between rounded-xl border px-4 py-2.5 text-left transition-all hover:shadow-sm disabled:opacity-50 ${
         danger ? "border-danger/20 hover:border-danger/40" : "border-line hover:border-line-strong"
       }`}
@@ -178,8 +223,8 @@ function SimButton({
         <div className="text-sm font-medium text-ink">{label}</div>
         <div className="text-xs text-faint">{sub}</div>
       </div>
-      <span className={`text-xs ${busy ? "text-faint" : danger ? "text-danger/60" : "text-accent/60"}`}>
-        {busy ? "…" : "simulate →"}
+      <span className={`text-xs ${pending ? "text-faint" : danger ? "text-danger/60" : "text-accent/60"}`}>
+        {pending ? "…" : "execute →"}
       </span>
     </button>
   );

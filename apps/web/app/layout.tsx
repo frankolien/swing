@@ -1,24 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import { Providers } from "@/components/Providers";
+import { StarField } from "@/components/StarField";
 import "./globals.css";
-
-const space = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space",
-  weight: ["400", "500", "600", "700"],
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500", "600"],
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains",
-  weight: ["400", "500"],
-});
 
 export const metadata: Metadata = {
   title: "the swing — reputation-gated credit for AI agents",
@@ -28,8 +13,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${space.variable} ${inter.variable} ${jetbrains.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className="antialiased">
+        <Providers>
+          <StarField />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

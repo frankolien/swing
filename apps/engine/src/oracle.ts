@@ -23,3 +23,25 @@ export async function commitScore(
   await publicClient.waitForTransactionReceipt({ hash: txHash });
   return { result, txHash };
 }
+
+/// Commit an explicit score + evidence hash (used by operator onboarding to attest a starter
+/// reputation for a freshly-launched agent). Same signer gate as commitScore.
+export async function commitRaw(
+  agentId: bigint,
+  score: number,
+  evidenceHash: `0x${string}`
+): Promise<`0x${string}`> {
+  if (!walletClient || !account) {
+    throw new Error("no signer configured (set ORACLE_SIGNER_PRIVATE_KEY or DEPLOYER_PRIVATE_KEY)");
+  }
+  const txHash = await walletClient.writeContract({
+    address: oracle.address,
+    abi: reputationOracleAbi,
+    functionName: "commit",
+    args: [agentId, score, evidenceHash],
+    account,
+    chain: mantleSepoliaTestnet,
+  });
+  await publicClient.waitForTransactionReceipt({ hash: txHash });
+  return txHash;
+}

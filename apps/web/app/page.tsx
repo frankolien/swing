@@ -1,257 +1,150 @@
 "use client";
 
-import { tierMeta } from "@swing/shared";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, Sparkles, TrendingUp, Zap } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityFeed } from "@/components/ActivityFeed";
-import { CreditPanel } from "@/components/CreditPanel";
-import { ReputationGauge } from "@/components/ReputationGauge";
-import { SpendingControls } from "@/components/SpendingControls";
-import { Card, Dot, ExplorerLink, Label } from "@/components/ui";
-import { api, type AgentState, type ScoreResult, type SwingEvent } from "@/lib/api";
-import { CHAIN_NAME, DEFAULT_AGENT_ID, EXPLORER } from "@/lib/config";
-import { ago, shortHash } from "@/lib/format";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Banknote,
+  Boxes,
+  Coins,
+  Gauge,
+  Receipt,
+  ShieldCheck,
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { Card } from "@/components/ui";
+import { api, type VaultStats } from "@/lib/api";
+import { usd } from "@/lib/format";
 
-const AGENT_ID = DEFAULT_AGENT_ID;
+const STEPS = [
+  { n: "01", t: "Trade", d: "An agent builds a track record trading on Byreal / RealClaw." },
+  { n: "02", t: "Score", d: "The engine commits a recency-decayed, Sybil-gated reputation on-chain." },
+  { n: "03", t: "Borrow", d: "Its tier opens an under-collateralized credit line from the vault." },
+  { n: "04", t: "Deploy", d: "Capital lands in a spending-guarded smart account." },
+  { n: "05", t: "Guard", d: "Allowed spends execute. Rogue spends revert on-chain." },
+];
 
-export default function Home() {
-  const [agent, setAgent] = useState<AgentState | null>(null);
-  const [deployment, setDeployment] = useState<Record<string, string | number> | null>(null);
-  const [events, setEvents] = useState<SwingEvent[]>([]);
-  const [result, setResult] = useState<ScoreResult | null>(null);
-  const [engineUp, setEngineUp] = useState<boolean | null>(null);
-  const [earning, setEarning] = useState(false);
-  const busy = useRef(false);
+const PIECES = [
+  { icon: BadgeCheck, t: "Identity", d: "Every agent is an ERC-8004 NFT; reputation is portable and transfer-aware." },
+  { icon: Gauge, t: "Reputation", d: "R ∈ [0,1000] from real PnL + signals, committed with an auditable evidence hash." },
+  { icon: Banknote, t: "Credit", d: "An ERC-4626 lender pool; a CreditManager opens reputation-tiered lines." },
+  { icon: ShieldCheck, t: "Safety", d: "An ERC-7579 spending guard reverts rogue transactions in the tx itself." },
+  { icon: Receipt, t: "Payments", d: "Agents pay each other over x402; proof-of-payment enriches reputation." },
+];
 
-  const refresh = useCallback(async () => {
-    try {
-      const [a, e] = await Promise.all([api.agent(AGENT_ID), api.events().catch(() => [])]);
-      setAgent(a);
-      setEvents(e);
-      setEngineUp(true);
-    } catch {
-      setEngineUp(false);
-    }
-  }, []);
+export default function Landing() {
+  const [vault, setVault] = useState<VaultStats | null>(null);
+  const [agentCount, setAgentCount] = useState<number | null>(null);
 
   useEffect(() => {
-    api.deployment().then(setDeployment).catch(() => {});
-    refresh();
-    const id = setInterval(() => {
-      if (!busy.current) refresh();
-    }, 7000);
-    return () => clearInterval(id);
-  }, [refresh]);
+    api.vault().then(setVault).catch(() => {});
+    api.agents().then((a) => setAgentCount(a.length)).catch(() => {});
+  }, []);
 
-  const earn = useCallback(async () => {
-    if (earning) return;
-    busy.current = true;
-    setEarning(true);
-    try {
-      const r = await api.earn(AGENT_ID);
-      setResult(r);
-      // optimistic: reflect the freshly-committed score immediately (RPC reads can lag)
-      setAgent((prev) =>
-        prev
-          ? {
-              ...prev,
-              reputation: {
-                ...prev.reputation,
-                score: r.score,
-                tier: r.tier,
-                tierName: tierMeta(r.score).name,
-                epoch: prev.reputation.epoch + 1,
-                evidenceHash: r.evidenceHash,
-                updatedAt: String(Math.floor(Date.now() / 1000)),
-              },
-            }
-          : prev
-      );
-      setTimeout(() => {
-        busy.current = false;
-        refresh();
-      }, 4000);
-    } catch {
-      busy.current = false;
-    } finally {
-      setEarning(false);
-    }
-  }, [earning, refresh]);
-
-  const rep = agent?.reputation;
-  const usdc = deployment?.MockUSDC as string | undefined;
+  const stats = [
+    { k: "Vault liquidity", v: vault ? usd(vault.totalAssets, true) : "$100K" },
+    { k: "Agents scored", v: String(agentCount ?? 6) },
+    { k: "Credit deployed", v: vault ? usd(vault.totalBorrowed, true) : "$5K" },
+    { k: "Rogue txs reverted", v: "1" },
+  ];
 
   return (
     <div className="min-h-screen">
-      {/* nav */}
-      <header className="sticky top-0 z-20 border-b hairline bg-paper/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <span className="relative grid h-7 w-7 place-items-center rounded-[9px] bg-gradient-to-br from-accent to-accent-2 shadow-[0_0_22px_-6px_var(--color-accent)]">
-              <span className="h-2.5 w-2.5 rotate-45 rounded-[3px] bg-[#06251a]" />
-            </span>
-            <span className="font-display text-xl font-semibold tracking-tight text-ink">the swing</span>
-            <span className="hidden text-xs text-faint sm:inline">
-              reputation-gated credit for autonomous agents
-            </span>
+      <SiteHeader />
+
+      <main className="mx-auto max-w-6xl px-6">
+        {/* hero */}
+        <section className="pt-20 pb-16 sm:pt-28">
+          <div className="inline-flex items-center gap-2 rounded-full border hairline bg-card px-3 py-1.5 text-[11px] tracking-wide text-muted">
+            <Boxes className="h-3.5 w-3.5" /> On Mantle · ERC-8004 · ERC-7579 · x402
           </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden items-center gap-2 rounded-full border hairline bg-card px-3 py-1.5 text-xs text-ink sm:inline-flex">
-              <Dot color={engineUp ? "var(--color-accent)" : "var(--color-danger)"} pulse={!!engineUp} />
-              {CHAIN_NAME}
-            </span>
-            <a
-              href={EXPLORER}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-faint hover:text-ink"
+          <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight text-ink sm:text-7xl">
+            Agents earn trust.
+            <br />
+            Capital follows.
+            <br />
+            Rogue spends <span className="text-danger">revert.</span>
+          </h1>
+          <p className="mt-7 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
+            the swing is an on-chain economic layer for autonomous AI agents. A portable reputation
+            gates a tiered credit line; a spending guard reverts rogue transactions on-chain; agents
+            settle with each other over x402. Every decision is a verifiable Mantle event.
+          </p>
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href="/console"
+              className="group inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-3 text-sm font-medium text-paper transition-all hover:bg-ink/90"
             >
-              explorer <ArrowUpRight className="h-3 w-3" />
-            </a>
+              Open the console
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <Link
+              href="/agents"
+              className="inline-flex items-center gap-2 rounded-lg border border-line-strong px-5 py-3 text-sm font-medium text-ink transition-colors hover:bg-card"
+            >
+              Browse agents
+            </Link>
           </div>
-        </div>
-      </header>
+        </section>
 
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-        {engineUp === false && <EngineBanner />}
-
-        {/* protocol stat strip */}
+        {/* live stats */}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border hairline bg-line sm:grid-cols-4">
-          {[
-            { k: "Vault liquidity", v: "$100K" },
-            { k: "Network", v: "Mantle Sepolia" },
-            { k: "Contracts live", v: "7" },
-            { k: "Rogue txs reverted", v: "1" },
-          ].map((s) => (
-            <div key={s.k} className="bg-card px-5 py-4">
+          {stats.map((s) => (
+            <div key={s.k} className="bg-card px-6 py-5">
               <div className="label">{s.k}</div>
-              <div className="mt-1.5 font-display text-lg text-ink tnum">{s.v}</div>
+              <div className="mt-2 font-display text-2xl text-ink tnum">{s.v}</div>
             </div>
           ))}
         </section>
 
-        {/* hero: identity + gauge + earn */}
-        <section className="grid gap-6 lg:grid-cols-5">
-          <Card className="p-8 lg:col-span-3">
-            <div className="flex items-start justify-between">
+        {/* how it works */}
+        <section className="py-20">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-2xl text-ink">How it works</h2>
+            <span className="label">the loop</span>
+          </div>
+          <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border hairline bg-line sm:grid-cols-2 lg:grid-cols-5">
+            {STEPS.map((s) => (
+              <div key={s.n} className="bg-card p-6">
+                <div className="font-mono text-xs text-faint">{s.n}</div>
+                <div className="mt-3 font-display text-lg text-ink">{s.t}</div>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* the pieces */}
+        <section className="pb-20">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-2xl text-ink">The pieces</h2>
+            <span className="label">composable on Mantle</span>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {PIECES.map((p) => (
+              <Card key={p.t} className="p-6 transition-colors hover:border-line-strong">
+                <div className="grid h-9 w-9 place-items-center rounded-lg border border-line-strong text-ink">
+                  <p.icon className="h-4 w-4" />
+                </div>
+                <div className="mt-4 font-display text-lg text-ink">{p.t}</div>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">{p.d}</p>
+              </Card>
+            ))}
+            <Card className="flex flex-col justify-between bg-paper-2/40 p-6">
+              <Coins className="h-5 w-5 text-faint" />
               <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="font-display text-3xl text-ink">Agent #{AGENT_ID}</h1>
-                  <span className="rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-medium text-muted">
-                    ERC-8004
-                  </span>
-                </div>
-                {agent && (
-                  <div className="mt-1.5 flex items-center gap-2 text-xs text-faint">
-                    <span>smart account</span>
-                    <ExplorerLink hash={agent.line.account} />
-                  </div>
-                )}
+                <div className="font-display text-lg text-ink">See it live</div>
+                <Link href="/console" className="mt-1.5 inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
+                  Open the console <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
-              <div className="text-right text-xs text-faint">
-                <div>epoch {rep?.epoch ?? 0}</div>
-                <div className="tnum">updated {ago(rep?.updatedAt ?? 0)}</div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col items-center gap-8 lg:flex-row lg:items-center">
-              <ReputationGauge
-                score={rep?.score ?? 0}
-                tier={rep?.tier ?? 0}
-                tierName={rep?.tierName ?? "Unproven"}
-              />
-
-              <div className="flex-1 space-y-4">
-                <div>
-                  <span className="pill">Reputation engine</span>
-                  <p className="mt-3 min-h-[44px] text-sm leading-relaxed text-ink/80">
-                    {result?.explanation ??
-                      "Score is recomputed from the agent's recency-decayed, Sybil-gated track record and committed on-chain. Post fresh trades to recompute."}
-                  </p>
-                </div>
-
-                <button
-                  onClick={earn}
-                  disabled={earning || engineUp === false}
-                  className="ring-ink group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent to-accent-2 px-5 py-3 text-sm font-semibold text-[#06251a] shadow-[0_10px_34px_-10px_var(--color-accent)] transition-all hover:brightness-110 disabled:opacity-50"
-                >
-                  {earning ? (
-                    <>
-                      <Sparkles className="h-4 w-4 animate-pulse" /> committing on-chain…
-                    </>
-                  ) : (
-                    <>
-                      <TrendingUp className="h-4 w-4" /> Post new trades → recompute
-                    </>
-                  )}
-                </button>
-
-                <AnimatePresence>
-                  {result && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      className="flex items-center justify-between rounded-xl border hairline bg-paper-2/40 px-3 py-2 text-xs"
-                    >
-                      <span className="text-faint">
-                        {result.prevScore != null && (
-                          <span className="tnum">
-                            {result.prevScore} → {result.score}
-                          </span>
-                        )}{" "}
-                        committed
-                      </span>
-                      <ExplorerLink hash={result.txHash} kind="tx" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {rep && (
-              <div className="mt-6 flex items-center gap-2 border-t hairline pt-4 text-xs text-faint">
-                <Zap className="h-3 w-3" />
-                evidence <span className="mono">{shortHash(rep.evidenceHash)}</span>
-                <span className="text-faint/60">— recomputable; binds the commit to its inputs</span>
-              </div>
-            )}
-          </Card>
-
-          <div className="lg:col-span-2">{agent && <CreditPanel line={agent.line} />}</div>
-        </section>
-
-        {/* safety + activity */}
-        <section className="grid gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            {agent && (
-              <SpendingControls account={agent.line.account} usdcAddress={usdc} tier={agent.line.tier} />
-            )}
-          </div>
-          <div className="lg:col-span-2">
-            <ActivityFeed events={events} />
+            </Card>
           </div>
         </section>
-
-        <footer className="flex flex-col items-center gap-1 pt-4 pb-10 text-center text-xs text-faint">
-          <div>
-            earn → reputation → credit → deploy → <span className="text-danger">rogue-reject</span> · every step a
-            verifiable Mantle event
-          </div>
-          <div>Turing Test Hackathon 2026 · Mantle × Bybit × Byreal × BGA</div>
-        </footer>
       </main>
-    </div>
-  );
-}
 
-function EngineBanner() {
-  return (
-    <div className="rounded-2xl border border-danger/30 bg-danger-soft px-5 py-4 text-sm text-ink">
-      <span className="font-medium text-danger">Engine not reachable.</span> Start it with{" "}
-      <code className="mono rounded bg-card px-1.5 py-0.5 text-xs">
-        ENGINE_PORT=8799 pnpm --filter @swing/engine start
-      </code>
+      <SiteFooter />
     </div>
   );
 }

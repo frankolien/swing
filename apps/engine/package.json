@@ -10,8 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@swing/shared": "workspace:*",
+    "@byreal-io/byreal-cli": "0.3.6",
     "@hono/node-server": "^1.13.7",
+    "@swing/shared": "workspace:*",
     "dotenv": "^16.4.5",
     "hono": "^4.6.14",
     "viem": "^2.21.0"
