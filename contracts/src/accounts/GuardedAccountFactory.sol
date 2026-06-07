@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {GuardedAccount} from "./GuardedAccount.sol";
 import {SpendingGuardLib} from "../libraries/SpendingGuardLib.sol";
+import {GuardedAccount} from "./GuardedAccount.sol";
 
 /// @title GuardedAccountFactory
 /// @notice Deterministic (CREATE2) deployment of GuardedAccounts, one per agent identity, so

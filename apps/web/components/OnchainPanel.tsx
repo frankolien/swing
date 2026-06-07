@@ -58,8 +58,9 @@ export function OnchainPanel() {
                 live
               </span>
             </div>
-            <p className="mt-0.5 text-xs text-faint">
-              An independent real wallet — the same engine, scoring genuine DEX activity.
+            <p className="mt-0.5 max-w-md text-xs text-faint">
+              {rec.provenance?.note ??
+                "An independent real wallet — the same engine, scoring genuine DEX activity."}
             </p>
           </div>
         </div>

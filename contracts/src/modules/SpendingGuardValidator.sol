@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import {
+    ERC1271_INVALID,
+    ERC1271_MAGIC,
+    IValidator,
+    MODULE_TYPE_VALIDATOR,
+    PackedUserOperation,
+    SIG_VALIDATION_FAILED,
+    SIG_VALIDATION_SUCCESS
+} from "./interfaces/IERC7579.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {
-    IValidator,
-    PackedUserOperation,
-    MODULE_TYPE_VALIDATOR,
-    SIG_VALIDATION_SUCCESS,
-    SIG_VALIDATION_FAILED,
-    ERC1271_MAGIC,
-    ERC1271_INVALID
-} from "./interfaces/IERC7579.sol";
 
 /// @title SpendingGuardValidator
 /// @notice ERC-7579 Type-1 validator implementing a scoped agent session key. The autonomous

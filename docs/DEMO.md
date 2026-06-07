@@ -80,14 +80,14 @@ Explorer: `https://explorer.sepolia.mantle.xyz`
 
 | Contract | Address |
 |---|---|
-| ReputationOracle | `0xAd480D894c734D71d2A1FD9a7Da802131D3c1617` |
-| CreditVault (ERC-4626) | `0x4DC35935403f683Bcab4c34519756C8458654344` |
-| CreditManager | `0x742929798a121F043B629e98647060b18db369c3` |
-| GuardedAccountFactory | `0x5bd77f46D4c557358409Ca47e8c79A7A3eA4bd44` |
-| SpendingGuardHook (7579) | `0xd679EAdad555F0c3b9083e52c2C79f99b713D224` |
-| SpendingGuardValidator (7579) | `0xa0DDd52B925c893aD6Af3Ba3cCc560cA362aa19c` |
-| MockUSDC | `0xDA9430BE1F57CAcB96951888DD757a1Af7953dBa` |
-| Agent #1 GuardedAccount | `0x1A1960bAc3C0852De7De2e5507C7AA1345Bc1C71` |
+| ReputationOracle | `0xe00962601106D055be7A1f97CD53c9C7B4b46632` |
+| CreditVault (ERC-4626) | `0x0aD20c99D72AA4371317a85A85Ce39C318a2b114` |
+| CreditManager | `0x1be497f127561a8F3e53aF53452Ce6cdC09e31a8` |
+| GuardedAccountFactory | `0xB1ccd35E453eB0a4eeD05a3AE0BFC638B397B997` |
+| SpendingGuardHook (7579) | `0x9A0735F793e438b63241252EB54ef7B519E698Bb` |
+| SpendingGuardValidator (7579) | `0x60C3C40566a932bAcA3AfD23699C38e9F0F3E2C3` |
+| MockUSDC | `0xa29799A188C220B17788a355Ec0166523172B09d` |
+| Agent #1 GuardedAccount | `0xA6f857F91C57f6DaC7BAf5F4A2abfA026A729365` |
 
 Sample reverted rogue tx (status 0): `0x88bba1eacc4c6274e054f95cec46a5ffe9bf0eef3b3307a0395472fca91c8bed`
 

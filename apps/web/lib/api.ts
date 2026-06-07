@@ -150,6 +150,7 @@ export interface OnchainRecord {
   address?: string;
   explorer?: string;
   venue?: string;
+  provenance?: { label: string; note: string };
   fetchedAt?: number;
   summary?: {
     swaps: number;

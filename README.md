@@ -11,7 +11,7 @@ rolling daily limits, allowlists. Agents pay each other for services over **x402
 
 > The signature beat: a compromised key tries to drain the account, and the
 > transaction **reverts on-chain** — a real, mined, `status 0` failure on the Mantle
-> explorer ([see it](https://sepolia.mantlescan.xyz/tx/0x0ec58c2f015116ad89fcb558aa8e429ceefac2c20edd7ce2c28bdab26734ced2)).
+> explorer ([see it](https://sepolia.mantlescan.xyz/tx/0x16d6faaff4087db6fe47647cc563bb75114f90dd6a02a856f8f86ce1f5335ff7)).
 > Earn → reputation → credit → deploy → *safety*, every step a verifiable Mantle event.
 
 This is infrastructure, not a single bot. It binds the three things autonomous
@@ -19,9 +19,9 @@ agents are missing — portable creditworthiness, safe custody of capital, and a
 standard pay rail — into one composable economic layer.
 
 **Status: live on Mantle Sepolia.** All 7 contracts deployed + **source-verified on
-Mantlescan**, 60 passing Foundry tests, and the full north-star loop executed on-chain
-with real transactions (reputation commit → credit draw → allowed spend → **rogue
-revert**). Addresses and tx hashes below.
+Mantlescan**, 91 passing Foundry tests (units + fuzz + invariants), and the full north-star
+loop executed on-chain with real transactions (reputation commit → credit draw → allowed
+spend → **rogue revert**). Addresses and tx hashes below.
 
 ---
 
@@ -64,25 +64,30 @@ signer: `0x4D6A7d6bF3C0a885D581AacEC0345526bd33273E`.
 
 | Contract | Address (verified source) |
 |---|---|
-| MockUSDC (vault asset / faucet) | [`0xDA94…3dBa`](https://sepolia.mantlescan.xyz/address/0xDA9430BE1F57CAcB96951888DD757a1Af7953dBa#code) |
-| ReputationOracle | [`0xAd48…1617`](https://sepolia.mantlescan.xyz/address/0xAd480D894c734D71d2A1FD9a7Da802131D3c1617#code) |
-| CreditVault (ERC-4626) | [`0x4DC3…4344`](https://sepolia.mantlescan.xyz/address/0x4DC35935403f683Bcab4c34519756C8458654344#code) |
-| CreditManager | [`0x7429…69c3`](https://sepolia.mantlescan.xyz/address/0x742929798a121F043B629e98647060b18db369c3#code) |
-| GuardedAccountFactory | [`0x5bd7…bd44`](https://sepolia.mantlescan.xyz/address/0x5bd77f46D4c557358409Ca47e8c79A7A3eA4bd44#code) |
-| SpendingGuardHook (ERC-7579 Type 4) | [`0xd679…D224`](https://sepolia.mantlescan.xyz/address/0xd679EAdad555F0c3b9083e52c2C79f99b713D224#code) |
-| SpendingGuardValidator (ERC-7579 Type 1) | [`0xa0DD…aa19c`](https://sepolia.mantlescan.xyz/address/0xa0DDd52B925c893aD6Af3Ba3cCc560cA362aa19c#code) |
+| MockUSDC (vault asset / faucet) | [`0xa297…B09d`](https://sepolia.mantlescan.xyz/address/0xa29799A188C220B17788a355Ec0166523172B09d#code) |
+| ReputationOracle (**2-of-3 committee**) | [`0xe009…6632`](https://sepolia.mantlescan.xyz/address/0xe00962601106D055be7A1f97CD53c9C7B4b46632#code) |
+| CreditVault (ERC-4626) | [`0x0aD2…b114`](https://sepolia.mantlescan.xyz/address/0x0aD20c99D72AA4371317a85A85Ce39C318a2b114#code) |
+| CreditManager | [`0x1be4…31a8`](https://sepolia.mantlescan.xyz/address/0x1be497f127561a8F3e53aF53452Ce6cdC09e31a8#code) |
+| GuardedAccountFactory | [`0xB1cc…B997`](https://sepolia.mantlescan.xyz/address/0xB1ccd35E453eB0a4eeD05a3AE0BFC638B397B997#code) |
+| SpendingGuardHook (ERC-7579 Type 4) | [`0x9A07…98Bb`](https://sepolia.mantlescan.xyz/address/0x9A0735F793e438b63241252EB54ef7B519E698Bb#code) |
+| SpendingGuardValidator (ERC-7579 Type 1) | [`0x60C3…E2C3`](https://sepolia.mantlescan.xyz/address/0x60C3C40566a932bAcA3AfD23699C38e9F0F3E2C3#code) |
 
-Canonical record: [`contracts/deployments/5003.json`](contracts/deployments/5003.json).
+Canonical record: [`contracts/deployments/5003.json`](contracts/deployments/5003.json). The
+ReputationOracle is a **2-of-3 signer committee** (threshold 2) — no single key can fabricate a
+score; the engine signs commits with a quorum of the committee keys.
 
 ### The full loop, executed on-chain (agentId 1)
 
+Re-run on the committee deployment — agent 1's GuardedAccount is
+[`0xA6f857…9365`](https://sepolia.mantlescan.xyz/address/0xA6f857F91C57f6DaC7BAf5F4A2abfA026A729365).
+
 | Step | Result | Tx |
 |---|---|---|
-| 1. Reputation commit | `R = 800` → tier **T3 (Trusted)** | [`0xf100c046…`](https://sepolia.mantlescan.xyz/tx/0xf100c0467edcbbf3647cbe1dcccc64d745e6c96e374c7a4c561026004849a4ef) |
-| 2. Credit line | borrowing power **35,777 USDC** = `creditLimit(800)` | (read) |
-| 3. Draw | **5,000 USDC** disbursed to the guarded account | [`0x82f672ff…`](https://sepolia.mantlescan.xyz/tx/0x82f672fff56d3e5a861b50f1eb3c51c1ed59fc1bb5b9fdd94b0085b5a26aef12) |
-| 4. Allowed spend | **1,000 USDC** → allowlisted merchant ✅ | [`0x589a730a…`](https://sepolia.mantlescan.xyz/tx/0x589a730ad98734d85de0b701177e2086afcb8887c71d416e5933c7cdc2d6cae8) |
-| 5. **Rogue spend** | → non-allowlisted attacker → **REVERTED** (`status 0`, attacker balance `0`) | [`0x0ec58c2f…`](https://sepolia.mantlescan.xyz/tx/0x0ec58c2f015116ad89fcb558aa8e429ceefac2c20edd7ce2c28bdab26734ced2) |
+| 1. Reputation commit | `R = 832` → tier **T3 (Trusted)**, via the **2-of-3 committee** | [`0x731c624f…`](https://sepolia.mantlescan.xyz/tx/0x731c624fb9b1e3dfd32bbb6e41b3ad45924d5510587ebfb2b7e300ccdf5b83dc) |
+| 2. Credit line | borrowing power **37,945 USDC** = `creditLimit(832)` | [`0xcb3ec6f5…`](https://sepolia.mantlescan.xyz/tx/0xcb3ec6f549293339f92b6c0398af3b216f5853562606986c622ea8fc7c9bf265) |
+| 3. Draw | **5,000 USDC** disbursed to the guarded account | [`0xb0746f28…`](https://sepolia.mantlescan.xyz/tx/0xb0746f283819fa9dcee92a52013c6d57cbf014f290a60e30f6320e8ae7611e9c) |
+| 4. Allowed spend | **1,000 USDC** → allowlisted merchant ✅ | [`0x9147444b…`](https://sepolia.mantlescan.xyz/tx/0x9147444b664c4a67c5803569269ff0147ea9d169ac51e38a5b34a057fad2f8a2) |
+| 5. **Rogue spend** | → non-allowlisted attacker → **REVERTED** (`status 0`, attacker balance `0`) | [`0x16d6faaf…`](https://sepolia.mantlescan.xyz/tx/0x16d6faaff4087db6fe47647cc563bb75114f90dd6a02a856f8f86ce1f5335ff7) |
 
 Step 5 is the prize beat: a real, mined, **failed** transaction — the `SpendingGuard`
 rejecting a drain attempt inside the EVM. The difference between *telling* an agent not
@@ -93,10 +98,18 @@ to misbehave and *making it impossible*.
 - **Reputation engine** — scores realized PnL (30-day half-life decay, Sybil-gated) and
   **auto-commits** `R ∈ [0,1000]` to the Oracle with an `evidenceHash` binding the commit
   to its exact inputs (recomputable / auditable). 7 passing scoring tests.
+- **No single key can fake reputation** — the `ReputationOracle` is a **k-of-n signer
+  committee**: a commit needs `threshold` signatures from distinct, owner-managed signers over
+  a digest bound to `(chainId, oracle, agentId, score, evidenceHash, nextEpoch)`. Submitting is
+  permissionless (the quorum's signatures carry the authority); signatures can't be replayed
+  across chains, deployments, or epochs. Deploy 1-of-1 for dev, 2-of-3 for the demo. → *the
+  honest answer to "what stops you assigning yourself a score?"*
 - **Real on-chain PnL** — indexes a live Mantle trader's DEX swaps (Merchant Moe / Agni)
   via the Etherscan V2 account API, reconstructs realized PnL in USD from stablecoin legs,
   and scores it. Not simulation — every trade is a public Mantle tx. (`/agents` → *Live
-  Mantle trader* panel.)
+  Mantle trader* panel, with its provenance shown inline.) Point `MANTLE_TRADER_ADDRESS` at a
+  RealClaw / competition agent to benchmark it directly; the default is a curated stablecoin
+  trader because clean PnL reconstruction needs stablecoin-legged round-trips.
 - **x402 payments** — faithful HTTP-402 round-trip (`402 + accepts` → `X-PAYMENT` → `200 +
   X-PAYMENT-RESPONSE`) with **real on-chain USDC settlement**, Transfer-log verification,
   and replay protection. Proof-of-payment loops back as an ERC-8004 reputation commit.
@@ -151,7 +164,8 @@ pnpm install
 git submodule update --init --recursive   # forge libs (OZ, Solady, forge-std)
 cp .env.example .env                       # RPC + a funded testnet signer; ZAI/Mantlescan keys optional
 
-# contracts — 60 tests incl. the rogue-tx revert
+# contracts — 91 tests: units, fuzz, + invariants (guard never funds a rogue dest;
+# borrowing power never exceeds the limit; vault accounting holds; committee quorum)
 pnpm contracts:test
 
 # run the stack (contracts are already deployed; addresses in contracts/deployments/5003.json)

@@ -17,9 +17,15 @@ fs_permissions = [
     { access = "write", path = "./deployments" },
 ]
 
+[invariant]
+runs = 64
+depth = 64
+fail_on_revert = false
+
 [profile.ci]
 verbosity = 3
 fuzz = { runs = 1000 }
+invariant = { runs = 128, depth = 96 }
 
 [fmt]
 line_length = 100

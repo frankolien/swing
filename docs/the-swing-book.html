@@ -288,7 +288,7 @@
   <p>Live on <strong>Mantle Sepolia (chainId 5003)</strong>: all 7 spine contracts deployed and
   <strong>source-verified on Mantlescan</strong>, <strong>60 passing Foundry tests</strong>,
   <strong>7 passing engine scoring tests</strong>. The full north-star loop has been executed on-chain
-  with real transactions &mdash; reputation commit (R=800 &rarr; T3), credit draw (5,000 USDC),
+  with real transactions &mdash; reputation commit (R=832 &rarr; T3, via a 2-of-3 committee), credit draw (5,000 USDC),
   allowed spend (status 1), and a rogue spend that <strong>reverted on-chain (status 0)</strong>.
   On top of the spine sit two real product entry points &mdash; <em>lend</em> on <code>/vault</code> and
   <em>launch an agent</em> on <code>/launch</code> &mdash; both wallet-connected and user-signed.</p>
@@ -357,7 +357,7 @@ function creditLimit(uint16 score) internal pure returns (uint256) {
   <p>Why 1.5 and not 2.0 or 1.0? A linear curve under-rewards the top of each band; a quadratic curve
   makes the jump from &ldquo;good&rdquo; to &ldquo;excellent&rdquo; so steep it dwarfs the tier structure.
   1.5 is the compromise that keeps the tier the <em>hard ceiling</em> while still paying a real premium
-  for reputation inside it. An agent at R=800 has borrowing power around $35,777 &mdash; the exact number
+  for reputation inside it. An agent at R=832 has borrowing power around $37,945 &mdash; the exact number
   the on-chain demo draws against.</p>
 
   <div class="callout note">
@@ -382,7 +382,7 @@ function creditLimit(uint16 score) internal pure returns (uint256) {
     <ul>
       <li>How an off-chain score becomes a fast, composable on-chain read</li>
       <li>The <code>Reputation</code> struct and why it carries an epoch and an evidence hash</li>
-      <li>Signer gating &mdash; only the engine&rsquo;s key may write</li>
+      <li>A <strong>k-of-n signer committee</strong> &mdash; no single key can fabricate a score</li>
       <li>How the evidence hash makes every commit independently auditable</li>
     </ul>
   </div>
@@ -400,29 +400,43 @@ function creditLimit(uint16 score) internal pure returns (uint256) {
     bytes32 evidenceHash;  // keccak of the exact scoring inputs
 }
 
-function commit(uint256 agentId, uint16 score, bytes32 evidenceHash)
-    external onlySigner
+// k-of-n committee: needs `threshold` signatures from distinct authorized signers over a
+// digest bound to (chainId, this oracle, agentId, score, evidenceHash, nextEpoch).
+function commit(uint256 agentId, uint16 score, bytes32 evidenceHash, bytes[] calldata sigs)
+    external                                   // permissionless to submit
 {
     require(score &lt;= SCORE_MAX, "score");
+    uint32 nextEpoch = _rep[agentId].epoch + 1;
+    bytes32 ethHash = toEthSignedMessageHash(_digest(agentId, score, evidenceHash, nextEpoch));
+
+    address last; uint256 valid;               // recovered signers must strictly ascend (dedup)
+    for (uint256 i; i &lt; sigs.length; ++i) {
+        address rec = ECDSA.recover(ethHash, sigs[i]);
+        require(rec &gt; last &amp;&amp; isSigner[rec]);   // sorted + authorized
+        last = rec; ++valid;
+    }
+    require(valid &gt;= threshold);                // quorum reached
+
     Reputation storage r = _rep[agentId];
-    r.score = score;
-    r.tier  = TierMath.tierOf(score);   // tier snapshotted on-chain
-    r.updatedAt = uint64(block.timestamp);
-    r.epoch += 1;
-    r.evidenceHash = evidenceHash;
-    emit ReputationCommitted(agentId, score, r.tier, r.epoch, evidenceHash);
+    r.score = score; r.tier = TierMath.tierOf(score);
+    r.updatedAt = uint64(block.timestamp); r.epoch = nextEpoch; r.evidenceHash = evidenceHash;
+    emit ReputationCommitted(agentId, score, r.tier, nextEpoch, evidenceHash);
 }</code></pre>
 
   <p>Three reads are exposed for the rest of the protocol: <code>getReputation(agentId)</code> returns
   the full struct; <code>scoreOf(agentId)</code> and <code>tierOf(agentId)</code> are the hot paths the
   <code>CreditManager</code> uses when sizing a line.</p>
 
-  <h4>Signer gating</h4>
-  <p>Only the engine&rsquo;s signer key can write. <code>onlySigner</code> guards <code>commit</code>;
-  <code>onlyOwner</code> guards <code>setSigner</code>, so the key is rotatable without redeploying.
-  This is what makes &ldquo;you can&rsquo;t self-assign reputation&rdquo; literally true &mdash; a user
-  cannot call <code>commit</code> for their own agent. The operator-onboarding flow in Chapter 14 routes
-  through this same gate, which is why the dashboard says the engine <em>attests</em> a starter score.</p>
+  <h4>A committee, not a key</h4>
+  <p>The oracle is a <strong>k-of-n signer committee</strong>: a commit needs <code>threshold</code>
+  signatures from distinct, owner-managed signers over the digest above, and submitting the transaction
+  is <em>permissionless</em> &mdash; the quorum&rsquo;s signatures carry the authority, not the sender. So
+  no single key can fabricate a score, and a quorum&rsquo;s signatures cannot be replayed across chains,
+  deployments, or epochs (all three are baked into the digest). It deploys 1-of-1 for dev and 2-of-3 for
+  the demo, and the engine signs each commit with a quorum of the committee keys. This is what makes
+  &ldquo;you can&rsquo;t self-assign reputation&rdquo; literally true &mdash; a user cannot call
+  <code>commit</code> for their own agent. The operator-onboarding flow in Chapter 14 routes through this
+  same gate, which is why the dashboard says the engine <em>attests</em> a starter score.</p>
 
   <div class="callout">
     <div class="k">War story</div>
@@ -1028,18 +1042,21 @@ const STABLES = new Set(["USDC","USDT","USDT0","USDe","USDY","mUSD","axlUSDC"]);
   <p>The result is a full record: realized PnL, win rate, closed trades, open positions, a span in days, and
   every trade as a clickable mainnet transaction. Those reconstructed trades become
   <code>ScoreInputs</code> the same scorer consumes, so the engine produces a real, derived score
-  (a two-sided stablecoin trader at <code>0xc1ed&hellip;ff26</code> scores 661, T2). The
+  (the discovered trader at <code>0x4993&hellip;0814</code> scores 710, T2 &mdash; 84% win, +$768 realized). The
   <code>POST /onchain/commit/:id</code> route commits that derived score to the Sepolia oracle for an
   isolated agent slot &mdash; live swaps &rarr; realized PnL &rarr; reputation &rarr; on-chain commit, end to
   end, with nothing simulated.</p>
 
   <div class="callout note">
-    <div class="k">A reference trader, deliberately</div>
-    <p>This record is one curated real wallet, not per-agent &mdash; PnL reconstruction only works cleanly
-    for traders whose round-trips have stablecoin legs, which most random addresses lack. The dashboard
-    therefore presents it as a labelled <em>reference benchmark</em> on the <code>/agents</code> page
-    (&ldquo;an independent real wallet, the same engine scoring genuine DEX activity&rdquo;), not as the
-    holdings of the selected agent.</p>
+    <div class="k">Discovered, not hand-picked</div>
+    <p>The benchmark wallet is <em>found</em> on-chain, not curated. A helper
+    (<code>pnpm --filter @swing/engine scan --router &lt;dex-router&gt;</code>) pulls recent traders from a
+    DEX router and ranks them by the engine&rsquo;s <em>own</em> reputation score &mdash; so the wallet on
+    screen is genuinely one the engine rates highly (here, 710/T2), not a high-volume break-even bot. It
+    stays a labelled <em>reference benchmark</em> on the <code>/agents</code> page, not the holdings of the
+    selected agent, because clean PnL reconstruction needs stablecoin-legged round-trips, which most
+    addresses lack. Point it at a RealClaw agent by dropping its address into
+    <code>MANTLE_TRADER_ADDRESS</code>.</p>
   </div>
 </section>
 
@@ -1369,22 +1386,22 @@ apps/web/                      # Next.js 15 dashboard
   <table>
     <thead><tr><th>Contract</th><th>Address</th></tr></thead>
     <tbody>
-      <tr><td>MockUSDC</td><td><code>0xDA9430BE1F57CAcB96951888DD757a1Af7953dBa</code></td></tr>
-      <tr><td>ReputationOracle</td><td><code>0xAd480D894c734D71d2A1FD9a7Da802131D3c1617</code></td></tr>
-      <tr><td>CreditVault (ERC-4626)</td><td><code>0x4DC35935403f683Bcab4c34519756C8458654344</code></td></tr>
-      <tr><td>CreditManager</td><td><code>0x742929798a121F043B629e98647060b18db369c3</code></td></tr>
-      <tr><td>GuardedAccountFactory</td><td><code>0x5bd77f46D4c557358409Ca47e8c79A7A3eA4bd44</code></td></tr>
-      <tr><td>SpendingGuardHook (7579 T4)</td><td><code>0xd679EAdad555F0c3b9083e52c2C79f99b713D224</code></td></tr>
-      <tr><td>SpendingGuardValidator (7579 T1)</td><td><code>0xa0DDd52B925c893aD6Af3Ba3cCc560cA362aa19c</code></td></tr>
-      <tr><td>Demo GuardedAccount (agent 1)</td><td><code>0x1A1960bAc3C0852De7De2e5507C7AA1345Bc1C71</code></td></tr>
+      <tr><td>MockUSDC</td><td><code>0xa29799A188C220B17788a355Ec0166523172B09d</code></td></tr>
+      <tr><td>ReputationOracle</td><td><code>0xe00962601106D055be7A1f97CD53c9C7B4b46632</code></td></tr>
+      <tr><td>CreditVault (ERC-4626)</td><td><code>0x0aD20c99D72AA4371317a85A85Ce39C318a2b114</code></td></tr>
+      <tr><td>CreditManager</td><td><code>0x1be497f127561a8F3e53aF53452Ce6cdC09e31a8</code></td></tr>
+      <tr><td>GuardedAccountFactory</td><td><code>0xB1ccd35E453eB0a4eeD05a3AE0BFC638B397B997</code></td></tr>
+      <tr><td>SpendingGuardHook (7579 T4)</td><td><code>0x9A0735F793e438b63241252EB54ef7B519E698Bb</code></td></tr>
+      <tr><td>SpendingGuardValidator (7579 T1)</td><td><code>0x60C3C40566a932bAcA3AfD23699C38e9F0F3E2C3</code></td></tr>
+      <tr><td>Demo GuardedAccount (agent 1)</td><td><code>0xA6f857F91C57f6DaC7BAf5F4A2abfA026A729365</code></td></tr>
     </tbody>
   </table>
   <h4>The verified loop, on-chain (agent 1)</h4>
   <table>
     <thead><tr><th>Step</th><th>Result</th></tr></thead>
     <tbody>
-      <tr><td>Reputation commit</td><td>R = 800 &rarr; tier T3</td></tr>
-      <tr><td>Credit line</td><td>borrowing power 35,777 USDC = <code>creditLimit(800)</code></td></tr>
+      <tr><td>Reputation commit</td><td>R = 832 &rarr; tier T3</td></tr>
+      <tr><td>Credit line</td><td>borrowing power 37,945 USDC = <code>creditLimit(832)</code></td></tr>
       <tr><td>Draw</td><td>5,000 USDC disbursed to the guarded account</td></tr>
       <tr><td>Allowed spend</td><td>1,000 USDC &rarr; allowlisted merchant &nbsp;<span class="green">&#10003; status 1</span></td></tr>
       <tr><td>Rogue spend</td><td>&rarr; non-allowlisted attacker &nbsp;<span class="red">&#10007; REVERTED, status 0</span></td></tr>

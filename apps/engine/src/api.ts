@@ -101,6 +101,7 @@ app.get("/onchain", async (c) => {
       address: rec.address,
       explorer: MANTLE_MAINNET_EXPLORER,
       venue: rec.venue,
+      provenance: rec.provenance,
       fetchedAt: rec.fetchedAt,
       summary: rec.summary,
       trades: rec.trades.slice(0, 12),
