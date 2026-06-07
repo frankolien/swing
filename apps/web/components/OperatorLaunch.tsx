@@ -9,7 +9,9 @@ import { TIERS } from "@swing/shared";
 import { api, type OnboardResult } from "@/lib/api";
 import { CONTRACTS, txUrl } from "@/lib/config";
 import { factoryAbi, managerAbi } from "@/lib/contracts";
+import { addMyAgent } from "@/lib/myAgents";
 import { ConnectButton } from "./ConnectButton";
+import { useMantleGuard, WrongNetworkBanner } from "./Network";
 import { Card, Label } from "./ui";
 
 const FACTORY = CONTRACTS.GuardedAccountFactory as `0x${string}`;
@@ -18,6 +20,7 @@ const shortHash = (h: string) => `${h.slice(0, 10)}…${h.slice(-4)}`;
 
 export function OperatorLaunch() {
   const { address, isConnected } = useAccount();
+  const { wrongNetwork } = useMantleGuard();
   const [result, setResult] = useState<OnboardResult | null>(null);
   const [step, setStep] = useState(0); // 0 score · 1 create · 2 openLine · 3 draw · 4 done
   const [scoring, setScoring] = useState(false);
@@ -72,7 +75,9 @@ export function OperatorLaunch() {
     if (!address || scoring) return;
     setScoring(true);
     try {
-      setResult(await api.onboard(address));
+      const r = await api.onboard(address);
+      setResult(r);
+      addMyAgent(r.agentId, address); // remember it so a refresh doesn't lose it
       setStep(1);
     } catch {
       /* engine down */
@@ -111,7 +116,11 @@ export function OperatorLaunch() {
         signs the rest.
       </p>
 
-      <div className="mt-7 space-y-1">
+      <div className="mt-6">
+        <WrongNetworkBanner />
+      </div>
+
+      <div className="mt-1 space-y-1">
         <StepRow
           n={1}
           title="Score your agent"
@@ -158,6 +167,7 @@ export function OperatorLaunch() {
                   )
                 }
                 busy={busy && action === "create"}
+                disabled={wrongNetwork}
                 label="Create account"
                 primary
               />
@@ -191,6 +201,7 @@ export function OperatorLaunch() {
                   )
                 }
                 busy={busy && action === "openLine"}
+                disabled={wrongNetwork}
                 label="Open credit line"
                 primary
               />
@@ -226,6 +237,7 @@ export function OperatorLaunch() {
                     )
                   }
                   busy={busy && action === "draw"}
+                  disabled={wrongNetwork}
                   label="Draw"
                   primary
                 />
@@ -300,16 +312,18 @@ function Btn({
   label,
   busy,
   primary,
+  disabled,
 }: {
   onClick: () => void;
   label: string;
   busy?: boolean;
   primary?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      disabled={busy}
+      disabled={busy || disabled}
       className={`ring-ink inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 ${
         primary ? "bg-ink text-paper hover:bg-ink/90" : "border border-line-strong text-ink"
       }`}

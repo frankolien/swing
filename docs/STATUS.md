@@ -68,7 +68,7 @@ thin-history → capped at T0; old losses decay away.
 
 ## Verify it
 ```bash
-pnpm contracts:test                 # 51 pass (incl. rogue-tx revert)
+pnpm contracts:test                 # 60 pass (incl. rogue-tx revert)
 pnpm --filter @swing/engine test    # 7 pass
 pnpm --filter @swing/shared typecheck && pnpm --filter @swing/engine typecheck
 ```

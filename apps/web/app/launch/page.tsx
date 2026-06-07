@@ -1,6 +1,7 @@
 "use client";
 
 import { Rocket } from "lucide-react";
+import { MyAgents } from "@/components/MyAgents";
 import { OperatorLaunch } from "@/components/OperatorLaunch";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
@@ -21,6 +22,10 @@ export default function LaunchPage() {
 
         <div className="mt-8">
           <OperatorLaunch />
+        </div>
+
+        <div className="mt-10">
+          <MyAgents />
         </div>
       </main>
       <SiteFooter />

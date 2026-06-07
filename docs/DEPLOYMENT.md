@@ -39,8 +39,9 @@ fully verifiable.
   fork backend couldn't hold a stable connection to the public RPC; single sequential txs are
   reliable). Re-deploying from a normal terminal can use `forge script script/Deploy.s.sol
   --broadcast` for a single-command deploy + `deployments/5003.json`.
-- **Source verification on mantlescan** is still TODO — needs a (free) mantlescan API key in
-  `MANTLESCAN_API_KEY`, then `forge verify-contract <addr> <Contract> --chain 5003`.
+- **Source verified on Mantlescan** — all 7 contracts + agent 1's `GuardedAccount`, via the
+  Etherscan V2 unified endpoint (`--verifier-url "https://api.etherscan.io/v2/api?chainid=5003"`,
+  `MANTLESCAN_API_KEY`). Source viewable at `sepolia.mantlescan.xyz/address/<addr>#code`.
 - MockUSDC has an open `mint` — it's the demo faucet token. Swap for a real Mantle asset
   (USDC/USDY) for a mainnet build.
 
@@ -65,5 +66,6 @@ Engine-driven demo (agentId 2, simulated source — each step a real commit tx):
 | earn | 775 | T3 | |
 
 Final on-chain: `scoreOf(2)=775`, `tierOf(2)=3`. Every commit carries an `evidenceHash` binding it
-to the exact inputs (recomputable/auditable). NL explanations are templated now; swap for Z.ai GLM
-behind `explainScore()`.
+to the exact inputs (recomputable/auditable). NL explanations are **live via Z.ai GLM**
+(`glm-4.5-flash`, `/health` → `explainer: glm`), with the deterministic template as a silent
+fallback on missing key / provider error.

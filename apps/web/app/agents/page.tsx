@@ -4,6 +4,7 @@ import { creditLimitUsd, tierMeta } from "@swing/shared";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { MyAgents } from "@/components/MyAgents";
 import { OnchainPanel } from "@/components/OnchainPanel";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { TIER_STYLE } from "@/components/tiers";
@@ -42,6 +43,10 @@ export default function AgentsPage() {
             </p>
           </div>
           <span className="label hidden sm:block">{agents?.length ?? "—"} agents · ERC-8004</span>
+        </div>
+
+        <div className="mt-8">
+          <MyAgents />
         </div>
 
         <Card className="mt-8 overflow-hidden">

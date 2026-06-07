@@ -12,6 +12,7 @@ import {
 import { CONTRACTS, txUrl } from "@/lib/config";
 import { erc20Abi, vaultAbi } from "@/lib/contracts";
 import { ConnectButton } from "./ConnectButton";
+import { useMantleGuard, WrongNetworkBanner } from "./Network";
 import { Card, Label } from "./ui";
 
 const USDC = CONTRACTS.MockUSDC as `0x${string}`;
@@ -21,6 +22,7 @@ const fmt = (v?: bigint) =>
 
 export function LenderPanel() {
   const { address, isConnected } = useAccount();
+  const { wrongNetwork } = useMantleGuard();
   const [amount, setAmount] = useState("1000");
   const [action, setAction] = useState<string | null>(null);
 
@@ -63,6 +65,7 @@ export function LenderPanel() {
   }, [amount]);
   const needsApproval = (allowance ?? 0n) < wei;
   const busy = isPending || confirming;
+  const locked = busy || wrongNetwork; // block writes off Mantle
 
   const run = (label: string, fn: () => void) => {
     setAction(label);
@@ -84,6 +87,7 @@ export function LenderPanel() {
 
   return (
     <Card className="p-6">
+      <WrongNetworkBanner />
       <div className="flex items-center justify-between">
         <Label>Your position</Label>
         {busy && <Loader2 className="h-3.5 w-3.5 animate-spin text-faint" />}
@@ -99,7 +103,7 @@ export function LenderPanel() {
           <div className="mt-1 tnum text-2xl text-ink">${fmt(usdcBal)}</div>
           <button
             onClick={() => run("faucet", () => writeContract({ address: USDC, abi: erc20Abi, functionName: "mint", args: [address!, parseUnits("10000", 6)] }))}
-            disabled={busy}
+            disabled={locked}
             className="mt-1 inline-flex items-center gap-1 text-[11px] text-faint transition-colors hover:text-ink disabled:opacity-50"
           >
             <Coins className="h-3 w-3" /> get 10k test USDC
@@ -124,7 +128,7 @@ export function LenderPanel() {
             <ActionButton
               label="Approve"
               busy={busy && action === "approve"}
-              disabled={busy || wei === 0n}
+              disabled={locked || wei === 0n}
               onClick={() => run("approve", () => writeContract({ address: USDC, abi: erc20Abi, functionName: "approve", args: [VAULT, wei] }))}
             />
           ) : (
@@ -132,7 +136,7 @@ export function LenderPanel() {
               label="Deposit"
               primary
               busy={busy && action === "deposit"}
-              disabled={busy || wei === 0n || (usdcBal ?? 0n) < wei}
+              disabled={locked || wei === 0n || (usdcBal ?? 0n) < wei}
               onClick={() => run("deposit", () => writeContract({ address: VAULT, abi: vaultAbi, functionName: "deposit", args: [wei, address!] }))}
             />
           )}
@@ -141,7 +145,7 @@ export function LenderPanel() {
         {(shares ?? 0n) > 0n && (
           <button
             onClick={() => run("withdraw", () => writeContract({ address: VAULT, abi: vaultAbi, functionName: "redeem", args: [shares!, address!, address!] }))}
-            disabled={busy}
+            disabled={locked}
             className="mt-3 w-full rounded-lg border hairline py-2 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
           >
             {busy && action === "withdraw" ? "withdrawing…" : "Withdraw all"}
