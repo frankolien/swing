@@ -7,16 +7,20 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "scan": "tsx scripts/scan-traders.ts",
+    "aa-demo": "tsx scripts/aa-demo.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@byreal-io/byreal-cli": "0.3.6",
     "@hono/node-server": "^1.13.7",
+    "@rhinestone/module-sdk": "^0.4.0",
     "@swing/shared": "workspace:*",
     "dotenv": "^16.4.5",
     "hono": "^4.6.14",
-    "viem": "^2.21.0"
+    "ox": "^0.11.3",
+    "permissionless": "^0.3.6",
+    "viem": "^2.52.2"
   },
   "devDependencies": {
     "@types/node": "^22.7.0",

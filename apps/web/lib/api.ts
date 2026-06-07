@@ -172,6 +172,40 @@ export interface OnchainCommit {
   onchain: { address: string; summary: OnchainRecord["summary"] };
 }
 
+export interface AaState {
+  ready: boolean;
+  reason: string;
+  explorer: string;
+  account?: string;
+  deployed?: boolean;
+  owner?: string;
+  agent?: string;
+  validator?: string;
+  hook?: string;
+  validatorInstalled?: boolean;
+  balanceUsd?: number;
+  policy?: { perTxCapUsd: number; dailyLimitUsd: number; frozen: boolean; merchant: string };
+}
+
+export interface AaPrepareResult {
+  state: AaState;
+  mintedTx?: string;
+  installedTx?: string;
+}
+
+export type AaSpendKind = "allowed" | "rogueDest" | "rogueCap";
+
+export interface AaSpendResult {
+  kind: AaSpendKind;
+  label: string;
+  to: string;
+  amountUsd: number;
+  outcome: "mined" | "refused";
+  txHash?: string;
+  explorerTx?: string;
+  reason?: string;
+}
+
 export interface X402Result {
   quote: {
     scheme: string;
@@ -227,6 +261,15 @@ export const api = {
     }),
   // Run the full x402 round-trip: 402 -> settle on Mantle -> redeem -> reputation feedback.
   x402Buy: (service: string) => call<X402Result>(`/x402/${service}/buy`, { method: "POST" }),
+  // ERC-7579 + Pimlico: the spending guard on a real Kernel v3.1 account (gas sponsored).
+  aaState: () => call<AaState>("/aa/state"),
+  aaPrepare: () => call<AaPrepareResult>("/aa/prepare", { method: "POST" }),
+  aaSpend: (kind: AaSpendKind) =>
+    call<AaSpendResult>("/aa/spend", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind }),
+    }),
   // Live Byreal CLMM (Solana) market context via the Byreal Skills CLI.
   byrealMarket: () => call<ByrealMarket>("/byreal/market"),
   // Verified on-chain Mantle trading record (real DEX swaps) + the engine's derived score.

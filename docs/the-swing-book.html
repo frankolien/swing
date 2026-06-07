@@ -551,6 +551,7 @@ SLOPE2_BPS   = 6000;   // steep above it
       <li>Why the guard logic is a shared library, not duplicated code</li>
       <li>The direct <code>GuardedAccount</code> &mdash; the bundler-independent path that guarantees the demo</li>
       <li>The ERC-7579 modules (validator + hook) for modular smart accounts</li>
+      <li>The live account-abstraction path: the same guard on a real Kernel v3.1 account via Pimlico</li>
       <li>How spend metering catches an ERC-20 transfer to a non-allowlisted address</li>
     </ul>
   </div>
@@ -628,6 +629,45 @@ function enforce(Config storage cfg, Window storage win, bool destAllowed,
   <code>keccak256(agentId, owner)</code>, so the engine and dashboard can <code>predict()</code> an
   account&rsquo;s address before it exists &mdash; which is exactly what the operator-launch stepper does
   to show the user where their agent will live before they sign the create.</p>
+
+  <h3>The third path: the guard, live on a real Kernel account</h3>
+  <p>The ERC-7579 modules are not a diagram &mdash; they run. <code>pnpm --filter @swing/engine aa-demo</code>
+  (and the dashboard&rsquo;s <em>Spending guard &middot; ERC-7579</em> panel) spin up a real
+  <strong>Kernel v3.1</strong> smart account on Mantle Sepolia, install the
+  <code>SpendingGuardValidator</code> + <code>SpendingGuardHook</code>, and drive spends through a real
+  ERC-4337 bundler with <strong>gas sponsored by Pimlico&rsquo;s paymaster</strong> &mdash; the owner key
+  never holds a wei. The agent&rsquo;s session key (the validator) drives the account; every spend it makes
+  is metered by its attached hook. An allowed, in-bounds payment to the allowlisted merchant <em>mines</em>;
+  a rogue one is <em>refused</em>, carrying the same typed error (<code>DestinationNotAllowed</code>,
+  <code>PerTxCapExceeded</code>) the ladder always throws. The engine exposes it over
+  <code>/aa/state</code>, <code>/aa/prepare</code>, <code>/aa/spend</code> off a shared
+  <code>aa.ts</code> core.</p>
+
+  <p>There is one honest difference in <em>where</em> the rejection surfaces. The
+  <code>GuardedAccount</code> path mines a status-0 transaction &mdash; the revert is on the chain. On the
+  account-abstraction path, a UserOp whose execution would revert is rejected by the bundler at
+  simulation: it never enters the mempool. So the guard makes the malicious operation
+  <em>un-bundleable</em> rather than mined-and-failed &mdash; same policy, same <code>SpendingGuardLib</code>,
+  enforced one layer up, surfaced at the bundler instead of in a block.</p>
+
+  <div class="callout">
+    <div class="k">War story</div>
+    <div class="ti">Five sharp edges in Kernel v3.1</div>
+    <p>Wiring a custom hook onto a real modular account is a gauntlet of undocumented detail, and the chain
+    gives almost no feedback &mdash; Mantle&rsquo;s public RPC blocks tracing, so a wrong move just
+    <em>succeeds and does nothing</em>. Five things had to be exactly right: (1) the validator-with-hook
+    install data is <em>three</em> ABI segments, not the two a popular SDK emits; (2) Kernel slices a leading
+    flag byte off the hook&rsquo;s init data, so the policy must be prefixed with <code>0xff</code> or it
+    decodes to garbage; (3) the UserOp nonce must carry validation-type <code>0x01</code> to route to our
+    validator &mdash; the SDK&rsquo;s helper emits <code>0x00</code>, which Kernel reads as <em>sudo</em> and
+    quietly runs the owner key with no hook at all; (4) the validator must be permitted for the
+    <em>inner</em> <code>execute</code> selector via <code>allowedSelectors</code>, or validation reverts
+    <code>InvalidValidator()</code>; and (5) the callData must be prefixed with the <code>executeUserOp</code>
+    selector so the EntryPoint takes the one path that runs the hook. The bug that cost the most, though, was
+    ours: passing the recipient as the call <em>target</em>, so the account called <code>transfer()</code> on
+    an EOA &mdash; a no-op that returns success. Found by decoding the on-chain <code>UserOperationEvent</code>
+    and reading balances, because nothing ever reverted.</p>
+  </div>
 </section>
 
 <!-- ===================== CHAPTER 6 ===================== -->

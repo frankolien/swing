@@ -6,6 +6,7 @@ import { CHAIN_ID } from "./config.js";
 import { oracle, manager, vault, usdc, addresses, account, guardedAccountAt } from "./chain.js";
 import { commitScore, commitRaw } from "./oracle.js";
 import { executeSpend } from "./spend.js";
+import { aaState, aaPrepare, aaSpend, type AaSpendKind } from "./aa.js";
 import {
   SERVICES,
   X402_VERSION,
@@ -257,6 +258,35 @@ app.post("/spend", async (c) => {
       amountUsd: body.amountUsd,
     })
   );
+});
+
+// ── ERC-7579 + account abstraction: the guard on a real Kernel v3.1 account via Pimlico ────────
+// Same SpendingGuardLib policy as the GuardedAccount, enforced one layer up on a modular smart
+// account with gas sponsored by Pimlico's paymaster. Allowed spend mines; rogue is refused (the
+// hook's preCheck reverts, so the bundler won't include the UserOp). Needs PIMLICO_API_KEY.
+
+app.get("/aa/state", async (c) => c.json(jsonSafe(await aaState())));
+
+// Idempotently deploy + fund + install the SpendingGuardValidator + Hook (sponsored UserOps).
+app.post("/aa/prepare", async (c) => {
+  try {
+    return c.json(jsonSafe(await aaPrepare()));
+  } catch (e) {
+    return c.json({ error: (e as Error)?.message ?? "aa prepare failed" }, 502);
+  }
+});
+
+// Run one spend through the agent validator: kind = allowed | rogueDest | rogueCap.
+app.post("/aa/spend", async (c) => {
+  const { kind } = (await c.req.json().catch(() => ({}))) as { kind?: AaSpendKind };
+  if (kind !== "allowed" && kind !== "rogueDest" && kind !== "rogueCap") {
+    return c.json({ error: "kind must be allowed | rogueDest | rogueCap" }, 400);
+  }
+  try {
+    return c.json(jsonSafe(await aaSpend(kind)));
+  } catch (e) {
+    return c.json({ error: (e as Error)?.message ?? "aa spend failed" }, 502);
+  }
 });
 
 // ── x402: agents pay each other for services ─────────────────────────────────────────────────

@@ -13,6 +13,7 @@ import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { SpendingControls } from "@/components/SpendingControls";
 import { TrackRecord } from "@/components/TrackRecord";
 import { X402Panel } from "@/components/X402Panel";
+import { AaPanel } from "@/components/AaPanel";
 import { Card, ExplorerLink } from "@/components/ui";
 import {
   api,
@@ -240,6 +241,11 @@ export function Console() {
           {agent && (
             <SpendingControls account={agent.line.account} usdcAddress={usdc} tier={agent.line.tier} />
           )}
+        </section>
+
+        {/* same guard, on a real ERC-7579 modular account via Pimlico */}
+        <section>
+          <AaPanel />
         </section>
       </main>
 

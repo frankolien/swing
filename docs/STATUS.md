@@ -32,6 +32,18 @@
   real + verifiable: live swaps → realized PnL → reputation → on-chain commit (`/onchain/commit`,
   status 1 on Sepolia) → GLM explanation. Dashboard panel shows every trade as a clickable mainnet
   tx. This is the honest "real on-chain PnL" the simulated source stands in for.
+- **Live ERC-7579 + account abstraction — the guard on a real modular account.** `pnpm --filter
+  @swing/engine aa-demo` spins up a real **Kernel v3.1** smart account on Mantle Sepolia, installs the
+  **SpendingGuardValidator** (scoped agent session key) + **SpendingGuardHook** (spend policy), and
+  runs spends through a **Pimlico** bundler with **gas fully sponsored by its paymaster**. An allowed,
+  in-bounds spend to the allowlisted merchant **mines**; a rogue spend (non-allowlisted dest, or over
+  the per-tx cap) is **refused — the hook's `preCheck` reverts, so the bundler won't include the
+  UserOp** (`DestinationNotAllowed` / `PerTxCapExceeded`, decoded live). Same `SpendingGuardLib` as the
+  standalone `GuardedAccount`, now enforced one layer up on a real ERC-7579 account through real 4337
+  infra. `GuardedAccount` remains the guaranteed mined-status-0 demo. Also in the **dashboard console**
+  (`Spending guard · ERC-7579` panel) and the engine API (`/aa/state`, `/aa/prepare`, `/aa/spend`),
+  off a shared `apps/engine/src/aa.ts` core. Run the engine with `AA_ACCOUNT_INDEX` set to a clean
+  index; the panel/CLI deploy + fund + install automatically.
 
 **Product layer — wallet-connected, user-signed flows (not just the server-signed demo).**
 - **Wallet connect** (wagmi v2 + viem, injected connector, Mantle Sepolia) with a network-switch
@@ -89,9 +101,12 @@ Full run-of-show, X thread, video voiceover, and judge Q&A in [`docs/DEMO.md`](.
    RealClaw competition agent address would make the narrative pointed. RealClaw itself exposes no
    PnL API and the comp has ended — the on-chain indexer is the honest path (reads any agent's real
    Mantle DEX trades directly). Perps PnL (vs spot) would need protocol-specific position decoding.
-2. **(optional) Live AA wiring** — install the ERC-7579 modules on a real Kernel v3 / Safe7579
-   account via Pimlico. Modules + tests already done; just the bundler/paymaster path.
-   `GuardedAccount` stays the guaranteed demo fallback.
+2. ~~**(optional) Live AA wiring**~~ **— DONE.** The ERC-7579 modules now run on a real **Kernel v3.1**
+   smart account via a **Pimlico** bundler + paymaster on Mantle Sepolia: `pnpm --filter @swing/engine
+   aa-demo` creates the account, installs `SpendingGuardValidator` + `SpendingGuardHook` (gas
+   sponsored), then an allowed spend **mines** while a rogue spend is **refused with the guard's typed
+   error** (`DestinationNotAllowed` / `PerTxCapExceeded`) — same `SpendingGuardLib`, one layer up.
+   `GuardedAccount` stays the guaranteed mined-status-0 fallback.
 3. **Submission** — record the 90s video, post the X thread, final README pass.
 
 ## Open risks / re-confirm
