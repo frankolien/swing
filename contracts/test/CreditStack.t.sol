@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test} from "forge-std/Test.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ReputationOracle} from "../src/ReputationOracle.sol";
-import {IReputationOracle} from "../src/interfaces/IReputationOracle.sol";
-import {CreditVault} from "../src/CreditVault.sol";
-import {ICreditVault} from "../src/interfaces/ICreditVault.sol";
 import {CreditManager} from "../src/CreditManager.sol";
+import {CreditVault} from "../src/CreditVault.sol";
+import {ReputationOracle} from "../src/ReputationOracle.sol";
+import {ICreditVault} from "../src/interfaces/ICreditVault.sol";
+import {IReputationOracle} from "../src/interfaces/IReputationOracle.sol";
 import {TierMath} from "../src/libraries/TierMath.sol";
 import {MockUSDC} from "./mocks/MockUSDC.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {Test} from "forge-std/Test.sol";
 
 /// @notice End-to-end credit flow: reputation -> tier -> limit -> draw -> repay -> liquidate.
 contract CreditStackTest is Test {
@@ -18,16 +19,21 @@ contract CreditStackTest is Test {
     CreditVault vault;
     CreditManager manager;
 
-    address signer = makeAddr("signer");
+    address signer;
+    uint256 signerPk;
     address lender = makeAddr("lender");
     address account = makeAddr("agentAccount"); // the agent's smart account
     uint256 constant AGENT = 1;
 
     function setUp() public {
+        (signer, signerPk) = makeAddrAndKey("signer");
         usdc = new MockUSDC();
-        oracle = new ReputationOracle(signer);
+        address[] memory signers = new address[](1);
+        signers[0] = signer;
+        oracle = new ReputationOracle(signers, 1); // 1-of-1 committee for the credit-flow tests
         vault = new CreditVault(IERC20(address(usdc)), "Swing Credit USDC", "scUSDC");
-        manager = new CreditManager(IReputationOracle(address(oracle)), ICreditVault(address(vault)));
+        manager =
+            new CreditManager(IReputationOracle(address(oracle)), ICreditVault(address(vault)));
         vault.setCreditManager(address(manager));
 
         usdc.mint(lender, 200_000e6);
@@ -38,8 +44,13 @@ contract CreditStackTest is Test {
     }
 
     function _commit(uint16 score) internal {
-        vm.prank(signer);
-        oracle.commit(AGENT, score, bytes32(0));
+        bytes32 evi = bytes32(0);
+        bytes32 ethHash =
+            MessageHashUtils.toEthSignedMessageHash(oracle.commitDigest(AGENT, score, evi));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPk, ethHash);
+        bytes[] memory sigs = new bytes[](1);
+        sigs[0] = abi.encodePacked(r, s, v);
+        oracle.commit(AGENT, score, evi, sigs);
     }
 
     function test_openLine_noLineErrors() public {
@@ -73,9 +84,7 @@ contract CreditStackTest is Test {
         _commit(800);
         manager.openLine(AGENT, account);
         uint256 power = manager.borrowingPower(AGENT);
-        vm.expectRevert(
-            abi.encodeWithSelector(CreditManager.OverLimit.selector, power, power + 1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CreditManager.OverLimit.selector, power, power + 1));
         manager.draw(AGENT, power + 1);
     }
 

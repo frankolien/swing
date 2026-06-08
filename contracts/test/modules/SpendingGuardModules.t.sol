@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test} from "forge-std/Test.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {SpendingGuardLib} from "../../src/libraries/SpendingGuardLib.sol";
 import {SpendingGuardHook} from "../../src/modules/SpendingGuardHook.sol";
 import {SpendingGuardValidator} from "../../src/modules/SpendingGuardValidator.sol";
-import {SpendingGuardLib} from "../../src/libraries/SpendingGuardLib.sol";
 import {PackedUserOperation} from "../../src/modules/interfaces/IERC7579.sol";
-import {MockAccount} from "./MockAccount.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
+import {MockAccount} from "./MockAccount.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {Test} from "forge-std/Test.sol";
 
 /// @notice The ERC-7579 path of the rogue-tx beat: the hook reverts a policy-breaching spend
 ///         during execution, and the validator gates UserOps to the agent session key.
@@ -114,9 +114,15 @@ contract SpendingGuardModulesTest is Test {
     function test_validator_erc1271() public {
         bytes32 h = keccak256("digest");
         vm.prank(address(account));
-        assertEq(validator.isValidSignatureWithSender(address(0), h, _sign(AGENT_PK, h)), bytes4(0x1626ba7e));
+        assertEq(
+            validator.isValidSignatureWithSender(address(0), h, _sign(AGENT_PK, h)),
+            bytes4(0x1626ba7e)
+        );
         vm.prank(address(account));
-        assertEq(validator.isValidSignatureWithSender(address(0), h, _sign(0xBEEF, h)), bytes4(0xffffffff));
+        assertEq(
+            validator.isValidSignatureWithSender(address(0), h, _sign(0xBEEF, h)),
+            bytes4(0xffffffff)
+        );
     }
 
     // ── module metadata ─────────────────────────────────────────────────────────────

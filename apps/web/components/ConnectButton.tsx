@@ -2,8 +2,8 @@
 
 import { LogOut, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from "wagmi";
-import { MANTLE_SEPOLIA } from "@/lib/wagmi";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { SwitchToMantleButton, useAutoSwitchMantle, useMantleGuard } from "./Network";
 
 export function ConnectButton() {
   // Avoid a hydration flash: wallet state only exists client-side.
@@ -13,8 +13,9 @@ export function ConnectButton() {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-  const chainId = useChainId();
-  const { switchChain } = useSwitchChain();
+  const { wrongNetwork } = useMantleGuard();
+  // Header is mounted once → safe place to own the auto-switch prompt.
+  useAutoSwitchMantle();
 
   if (!mounted) return <div className="h-[30px] w-[132px]" aria-hidden />;
 
@@ -34,16 +35,7 @@ export function ConnectButton() {
     );
   }
 
-  if (chainId !== MANTLE_SEPOLIA.id) {
-    return (
-      <button
-        onClick={() => switchChain({ chainId: MANTLE_SEPOLIA.id })}
-        className="inline-flex items-center gap-1.5 rounded-full border border-danger/40 bg-danger-soft px-3.5 py-1.5 text-xs font-medium text-danger transition-colors"
-      >
-        Switch to Mantle Sepolia
-      </button>
-    );
-  }
+  if (wrongNetwork) return <SwitchToMantleButton />;
 
   return (
     <button

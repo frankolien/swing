@@ -1,0 +1,1536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Swing — Engineering Reference</title>
+<style>
+  :root{
+    --paper:#0a0a0b; --paper-2:#141416; --card:#141416; --card-2:#1b1b1e;
+    --line:#2a2a2e; --line-strong:#3a3a40;
+    --ink:#fafafa; --muted:#c4c4c8; --faint:#86868c;
+    --danger:#ff5b5b; --danger-soft:#2a1416;
+    --gold:#d9c27a; --green:#7fcf8f;
+    --t0:#9b9b9b; --t1:#bdbdbd; --t2:#dadada; --t3:#fafafa;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Inter",Arial,sans-serif;
+    --mono:"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  @page{ size:A4; margin:0; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:10.2pt; line-height:1.62;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    letter-spacing:0.005em;
+    /* full-bleed dark page: text inset on the inline axis via padding;
+       top/bottom inset comes from the print margin (filled dark by the header/footer bars) */
+    padding:0 16mm;
+  }
+  p{ margin:0 0 9px; color:var(--muted); }
+  strong{ color:var(--ink); font-weight:600; }
+  em{ color:var(--ink); font-style:italic; }
+  a{ color:var(--ink); text-decoration:none; }
+  code{ font-family:var(--mono); font-size:0.86em; color:var(--ink);
+        background:rgba(255,255,255,0.05); padding:0.5px 4px; border-radius:4px; }
+  h1,h2,h3,h4{ color:var(--ink); letter-spacing:-0.01em; }
+
+  /* page-level helpers */
+  .page-break{ break-before:page; }
+  .chapter{ break-before:page; padding-top:4px; }
+  .nobreak{ break-inside:avoid; }
+
+  /* COVER */
+  .cover{ height:257mm; display:flex; flex-direction:column; justify-content:center; }
+  .cover .mark{ width:34px; height:34px; border:1.5px solid var(--line-strong);
+    border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:30px;}
+  .cover .mark i{ width:13px; height:13px; background:var(--ink); border-radius:3px; display:block;}
+  .cover h1{ font-family:var(--serif); font-weight:400; font-size:52pt; line-height:1.02;
+    margin:0 0 14px; letter-spacing:-0.02em; }
+  .cover .sub{ font-family:var(--serif); font-style:italic; color:#9aa0a6; font-size:14pt;
+    max-width:150mm; line-height:1.45; }
+  .cover .meta{ margin-top:48px; color:var(--faint); font-size:9.5pt; letter-spacing:0.06em; text-transform:uppercase; }
+  .cover .edition{ margin-top:6px; color:var(--faint); font-size:9pt; }
+  .cover .red{ color:var(--danger); }
+
+  /* CONTENTS */
+  .toc h2{ font-family:var(--serif); font-weight:400; font-size:30pt; margin:0 0 26px; }
+  .toc .part{ color:#6fb3c9; font-size:9.5pt; letter-spacing:0.16em; text-transform:uppercase;
+    font-weight:600; margin:22px 0 10px; }
+  .toc .row{ display:flex; align-items:baseline; gap:10px; padding:5px 0;
+    border-bottom:1px dotted var(--line); }
+  .toc .row .n{ color:var(--faint); font-family:var(--mono); font-size:9pt; width:26px; }
+  .toc .row .t{ color:var(--ink); font-size:10.5pt; flex:1; }
+
+  /* CHAPTER OPENER */
+  .opener{ position:relative; padding-top:6mm; margin-bottom:18px; }
+  .opener .bignum{ font-family:var(--serif); font-weight:400; font-size:92pt; line-height:0.9;
+    color:transparent; -webkit-text-stroke:1px var(--line-strong); margin:0 0 4px; }
+  .opener .part-label{ color:#6fb3c9; font-size:8.5pt; letter-spacing:0.16em; text-transform:uppercase;
+    font-weight:600; margin-bottom:8px; }
+  .opener h2{ font-family:var(--serif); font-weight:400; font-size:30pt; line-height:1.05;
+    margin:0 0 4px; letter-spacing:-0.015em; }
+  .learn{ margin:18px 0 22px; }
+  .learn .h{ color:#6fb3c9; font-size:8.5pt; letter-spacing:0.16em; text-transform:uppercase;
+    font-weight:600; margin-bottom:10px; border-bottom:1px solid var(--line); padding-bottom:8px;}
+  .learn ul{ margin:0; padding:0; list-style:none; }
+  .learn li{ position:relative; padding:4px 0 4px 18px; color:var(--muted); font-size:10pt; }
+  .learn li:before{ content:"\25B8"; position:absolute; left:0; color:#6fb3c9; font-size:8pt; top:6px;}
+
+  h3{ font-size:14pt; margin:22px 0 8px; font-weight:600; }
+  h4{ font-size:11pt; margin:16px 0 6px; font-weight:600; color:var(--ink); }
+  .sub-rule{ border:0; border-top:1px solid var(--line); margin:8px 0 12px; }
+
+  /* CODE */
+  pre{ background:#0d0d10; border:1px solid var(--line); border-radius:8px;
+    padding:11px 13px; margin:11px 0 13px; overflow:hidden; break-inside:avoid; }
+  pre code{ background:none; padding:0; font-size:8.4pt; line-height:1.5; color:#e8e8ea;
+    white-space:pre-wrap; word-break:break-word; }
+  pre .c{ color:var(--faint); font-style:italic; }
+  pre .s{ color:var(--gold); }
+  .codecap{ color:var(--faint); font-size:8pt; font-family:var(--mono); margin:-8px 0 12px; }
+
+  /* CALLOUTS */
+  .callout{ border:1px solid var(--line); border-left:3px solid var(--gold);
+    background:#131012; border-radius:8px; padding:12px 15px; margin:14px 0; break-inside:avoid; }
+  .callout.note{ border-left-color:#6fb3c9; background:#0f1316; }
+  .callout .k{ font-size:8pt; letter-spacing:0.16em; text-transform:uppercase; font-weight:700;
+    color:var(--gold); margin-bottom:5px; }
+  .callout.note .k{ color:#6fb3c9; }
+  .callout .ti{ font-weight:600; color:var(--ink); margin-bottom:5px; font-size:10.5pt; }
+  .callout p{ font-size:9.5pt; margin-bottom:6px; }
+  .callout p:last-child{ margin-bottom:0; }
+
+  /* TABLES */
+  table{ width:100%; border-collapse:collapse; margin:12px 0 14px; break-inside:avoid; font-size:9pt;}
+  thead th{ text-align:left; color:#6fb3c9; font-size:8pt; letter-spacing:0.1em; text-transform:uppercase;
+    font-weight:600; padding:9px 10px; border-bottom:1px solid var(--line-strong); }
+  tbody td{ padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--muted); }
+  tbody td:first-child{ color:var(--ink); }
+  td code{ font-size:8pt; }
+
+  /* FIGURE / DIAGRAM */
+  .fig{ border:1px solid var(--line); background:#0f0f12; border-radius:10px; padding:18px 16px;
+    margin:14px 0; break-inside:avoid; }
+  .figcap{ color:#6fb3c9; font-size:8.5pt; margin-top:10px; }
+  .figcap b{ color:#6fb3c9; }
+  .flow{ display:flex; align-items:stretch; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .node{ border:1px solid var(--line-strong); border-radius:8px; padding:9px 11px; min-width:96px;
+    text-align:center; background:#15151a; }
+  .node .nt{ font-weight:600; font-size:9pt; color:var(--ink); }
+  .node .nd{ color:var(--faint); font-size:7.6pt; margin-top:2px; line-height:1.3; }
+  .node.bad{ border-color:#5a2a2a; background:#1b1012; }
+  .node.bad .nt{ color:var(--danger); }
+  .node.ok{ border-color:#2f5a37; background:#101b13; }
+  .node.ok .nt{ color:var(--green); }
+  .arrow{ display:flex; align-items:center; color:var(--faint); font-size:14pt; }
+
+  .lede{ color:var(--ink); font-size:11pt; }
+  .small{ font-size:9pt; color:var(--faint); }
+  .tier-chip{ display:inline-block; padding:1px 7px; border-radius:999px; font-size:8pt; font-weight:600;
+    border:1px solid; }
+  .red{ color:var(--danger); }
+  .green{ color:var(--green); }
+  ul.tight{ margin:6px 0 10px; padding-left:18px; }
+  ul.tight li{ color:var(--muted); margin:3px 0; }
+  .kicker{ color:var(--faint); font-size:9pt; }
+
+  /* syntax highlighting — restrained dark palette, no red (red stays for danger only) */
+  pre code.hljs{ color:#c7c9d3; }
+  .hljs-comment, .hljs-quote{ color:#6b6d77; font-style:italic; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section{ color:#7aa2f7; }
+  .hljs-meta, .hljs-meta .hljs-keyword{ color:#7aa2f7; }
+  .hljs-type, .hljs-built_in, .hljs-builtin-name, .hljs-class .hljs-title{ color:#7dcfff; }
+  .hljs-title, .hljs-title.function_, .hljs-function .hljs-title{ color:#7dcfff; }
+  .hljs-string, .hljs-meta .hljs-string, .hljs-regexp{ color:#9ece6a; }
+  .hljs-number{ color:#e0af68; }
+  .hljs-attr, .hljs-attribute, .hljs-property, .hljs-variable.constant_{ color:#73daca; }
+  .hljs-symbol, .hljs-bullet{ color:#bb9af7; }
+  .hljs-params, .hljs-variable, .hljs-template-variable{ color:#c0caf5; }
+  .hljs-operator, .hljs-punctuation{ color:#a9b1d6; }
+  .hljs-emphasis{ font-style:italic; }
+  .hljs-strong{ font-weight:600; }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="mark"><i></i></div>
+  <h1>The Swing</h1>
+  <div class="sub">A Reputation-Gated Credit Layer for Autonomous AI Agents on Mantle —
+    The Complete Engineering Reference</div>
+  <div class="meta">Product Spec &middot; Architecture &middot; Code Walkthrough</div>
+  <div class="edition">Turing Test Hackathon 2026 &middot; Mantle &times; Bybit &times; Byreal &times; BGA &middot; Agentic Economy track</div>
+  <div class="edition" style="margin-top:18px;">earn &rarr; reputation &rarr; credit &rarr; deploy &rarr; <span class="red">rogue-reject</span></div>
+</section>
+
+<!-- ===================== CONTENTS ===================== -->
+<section class="page-break toc">
+  <h2>Contents</h2>
+
+  <div class="part">Part I &mdash; The Thesis</div>
+  <div class="row"><div class="n">1</div><div class="t">What The Swing Is, and Why It Wins</div></div>
+
+  <div class="part">Part II &mdash; The On-Chain Spine</div>
+  <div class="row"><div class="n">2</div><div class="t">TierMath: The Reputation &rarr; Credit Curve</div></div>
+  <div class="row"><div class="n">3</div><div class="t">The ReputationOracle</div></div>
+  <div class="row"><div class="n">4</div><div class="t">CreditVault &amp; CreditManager</div></div>
+  <div class="row"><div class="n">5</div><div class="t">The SpendingGuard and the Rogue-Reject</div></div>
+  <div class="row"><div class="n">6</div><div class="t">Deployment, Foundry &amp; Verification</div></div>
+
+  <div class="part">Part III &mdash; The Reputation Engine</div>
+  <div class="row"><div class="n">7</div><div class="t">The Scoring Core</div></div>
+  <div class="row"><div class="n">8</div><div class="t">The Oracle Bridge &amp; Chain Client</div></div>
+  <div class="row"><div class="n">9</div><div class="t">The HTTP API Surface</div></div>
+  <div class="row"><div class="n">10</div><div class="t">Live Spend &amp; the On-Chain Rogue-Reject</div></div>
+  <div class="row"><div class="n">11</div><div class="t">x402 Agent-to-Agent Payments</div></div>
+  <div class="row"><div class="n">12</div><div class="t">Z.ai GLM Explanations</div></div>
+  <div class="row"><div class="n">13</div><div class="t">Byreal Context &amp; the On-Chain PnL Indexer</div></div>
+  <div class="row"><div class="n">14</div><div class="t">Operator Onboarding</div></div>
+
+  <div class="part">Part IV &mdash; The Frontend</div>
+  <div class="row"><div class="n">15</div><div class="t">The Design System</div></div>
+  <div class="row"><div class="n">16</div><div class="t">The Pages</div></div>
+  <div class="row"><div class="n">17</div><div class="t">The Components</div></div>
+  <div class="row"><div class="n">18</div><div class="t">Wallet-Connected Product Flows</div></div>
+
+  <div class="part">Part V &mdash; Reference</div>
+  <div class="row"><div class="n">A</div><div class="t">The File Map</div></div>
+  <div class="row"><div class="n">B</div><div class="t">Deployed Addresses &amp; Environment</div></div>
+  <div class="row"><div class="n">C</div><div class="t">The 90-Second Demo Run-of-Show</div></div>
+  <div class="row"><div class="n">D</div><div class="t">Glossary</div></div>
+</section>
+
+<!-- ===================== CHAPTER 1 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">1</div>
+    <div class="part-label">Part I &mdash; The Thesis</div>
+    <h2>What The Swing Is, and Why It Wins</h2>
+  </div>
+
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The one-sentence thesis, and the gap in the agent economy it fills</li>
+      <li>The four composable pieces &mdash; identity, reputation, credit, safety &mdash; and how they chain</li>
+      <li>The north-star loop: <em>earn &rarr; reputation &rarr; credit &rarr; deploy &rarr; rogue-reject</em></li>
+      <li>Why every step is a verifiable Mantle event, not a claim</li>
+      <li>The current deployment status: live on Mantle Sepolia, source-verified, 60 passing tests</li>
+    </ul>
+  </div>
+
+  <p class="lede">Autonomous agents are starting to create real, verifiable on-chain value &mdash;
+  a RealClaw bot trading on Mantle, an agent earning fees over x402. But they have no
+  <strong>portable creditworthiness</strong> and no <strong>safe way to be trusted with capital</strong>.
+  A profitable agent cannot borrow against its track record. A compromised agent key can drain a wallet.
+  Identity exists (ERC&#8209;8004) and payments exist (x402), but nothing binds them into an
+  economic trust layer.</p>
+
+  <p><strong>The swing</strong> is that layer. An agent earns a portable, recency-decayed,
+  Sybil-gated reputation from its real on-chain track record. That reputation gates access to capital:
+  larger, partially- or under-collateralized credit lines drawn from an ERC-4626 lender vault.
+  The capital is deployed through a spending-controlled smart account whose guard
+  <strong>rejects rogue transactions on-chain</strong> &mdash; per-tx caps, rolling daily limits, allowlists.
+  Agents pay each other for services over x402, and proof-of-payment loops back as reputation.</p>
+
+  <h3>The four pieces</h3>
+  <table>
+    <thead><tr><th>Layer</th><th>What it is</th><th>Where it lives</th></tr></thead>
+    <tbody>
+      <tr><td>Identity</td><td>ERC-8004 agentId per agent; <code>agentWallet</code> &rarr; the smart account</td><td><code>ReputationOracle</code> keys</td></tr>
+      <tr><td>Reputation</td><td>Off-chain engine scores PnL + signals &rarr; R &isin; [0,1000], committed on-chain with an evidence hash</td><td><code>apps/engine</code> + <code>ReputationOracle</code></td></tr>
+      <tr><td>Credit</td><td>ERC-4626 lender pool + a <code>CreditManager</code> opening reputation-tiered lines</td><td><code>contracts/</code></td></tr>
+      <tr><td>Safety</td><td>One Solidity guard library, used by both a direct <code>GuardedAccount</code> and ERC-7579 modules</td><td><code>contracts/src</code></td></tr>
+      <tr><td>Payments</td><td>x402 agent-to-agent settlement; proof-of-payment loops back as feedback</td><td><code>apps/engine</code></td></tr>
+      <tr><td>Reasoning</td><td>Z.ai GLM narrates each credit decision in plain language</td><td><code>apps/engine</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>The loop</h3>
+  <div class="fig">
+    <div class="flow">
+      <div class="node"><div class="nt">Trade</div><div class="nd">Byreal / RealClaw,<br>real DEX swaps</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">Reputation Engine</div><div class="nd">recency-decayed,<br>Sybil-gated R</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">Oracle</div><div class="nd">commit R + tier<br>on-chain</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">CreditManager</div><div class="nd">tier &rarr; limit,<br>draw from vault</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">Guarded Account</div><div class="nd">spends within<br>policy</div></div>
+    </div>
+    <div class="flow" style="margin-top:12px;">
+      <div class="node ok"><div class="nt">&#10003; allowed tx mines</div><div class="nd">status 1</div></div>
+      <div class="arrow" style="opacity:0">&rarr;</div>
+      <div class="node bad"><div class="nt">&#10007; rogue tx REVERTS</div><div class="nd">status 0, on-chain</div></div>
+    </div>
+    <div class="figcap"><b>Figure 1.1</b> &mdash; The north-star loop. Every box is a verifiable Mantle event:
+    a reputation commit, a credit decision, a spend, or a mined revert.</div>
+  </div>
+
+  <p>The signature beat is the last box. A compromised key tries to drain the guarded account to a
+  non-allowlisted address; the spend is rejected <em>inside the EVM</em> and the transaction
+  <strong>mines as a reverted, status-0 transaction</strong> on the Mantle explorer. This is the
+  difference between <em>telling</em> an agent not to misbehave and <em>making it impossible</em>.</p>
+
+  <div class="callout note">
+    <div class="k">Why it wins the rubric</div>
+    <p>The Agentic Economy track rewards integration depth, agent autonomy, verifiability, and demo
+    quality. The swing maximises all four at once: it uses ERC-8004 (identity), Byreal/RealClaw
+    (the track requirement), x402 (the payments rail the EIP points to), AA-style spending controls
+    (a visceral safety story), and Mantle DeFi &mdash; with every score, credit decision, and rejection
+    landing as an on-chain event. It is infrastructure, not a single bot.</p>
+  </div>
+
+  <h3>Status</h3>
+  <p>Live on <strong>Mantle Sepolia (chainId 5003)</strong>: all 7 spine contracts deployed and
+  <strong>source-verified on Mantlescan</strong>, <strong>60 passing Foundry tests</strong>,
+  <strong>7 passing engine scoring tests</strong>. The full north-star loop has been executed on-chain
+  with real transactions &mdash; reputation commit (R=832 &rarr; T3, via a 2-of-3 committee), credit draw (5,000 USDC),
+  allowed spend (status 1), and a rogue spend that <strong>reverted on-chain (status 0)</strong>.
+  On top of the spine sit two real product entry points &mdash; <em>lend</em> on <code>/vault</code> and
+  <em>launch an agent</em> on <code>/launch</code> &mdash; both wallet-connected and user-signed.</p>
+
+  <p class="kicker">The rest of this book walks the codebase from the chain up: the contracts that are
+  the source of truth, the engine that projects reputation onto them, and the frontend that turns the
+  whole loop into something a judge can watch happen.</p>
+</section>
+
+<!-- ===================== CHAPTER 2 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">2</div>
+    <div class="part-label">Part II &mdash; The On-Chain Spine</div>
+    <h2>TierMath: The Reputation &rarr; Credit Curve</h2>
+  </div>
+
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>Why the contracts &mdash; not the engine &mdash; are the source of truth, and what that buys us</li>
+      <li>The four trust tiers and their score boundaries</li>
+      <li>The super-linear credit-limit curve <code>limit = BASE &middot; (R/1000)^1.5</code> and why the exponent is 1.5</li>
+      <li>How tiers set per-tx caps, daily limits, and collateral factors</li>
+      <li>Why this pure library is mirrored byte-for-byte in TypeScript</li>
+    </ul>
+  </div>
+
+  <p class="lede">Foundry contracts are the spine; the engine and dashboard are projections of them.
+  The most important consequence of that decision lives in one pure library:
+  <code>TierMath.sol</code>. It defines the entire economic relationship between a number
+  (an agent's reputation R) and a permission (how much capital it can touch, how fast, and against
+  how much collateral). Get this curve right and the rest of the protocol is bookkeeping.</p>
+
+  <h3>Four tiers</h3>
+  <p>A score in <code>[0,1000]</code> maps to one of four tiers. The boundaries are fixed in
+  <code>tierOf(uint16 score)</code>:</p>
+  <table>
+    <thead><tr><th>Tier</th><th>Score range</th><th>Stance</th><th>Collateral factor</th><th>Per-tx cap</th><th>Daily limit</th><th>Tier cap</th></tr></thead>
+    <tbody>
+      <tr><td>T0 Unproven</td><td>0&ndash;249</td><td>over-collateralized</td><td>150%</td><td>$25</td><td>$50</td><td>$100</td></tr>
+      <tr><td>T1 Emerging</td><td>250&ndash;499</td><td>fully collateralized</td><td>100%</td><td>$250</td><td>$500</td><td>$1,000</td></tr>
+      <tr><td>T2 Established</td><td>500&ndash;749</td><td>50% uncollateralized</td><td>50%</td><td>$2,000</td><td>$5,000</td><td>$10,000</td></tr>
+      <tr><td>T3 Trusted</td><td>750&ndash;1000</td><td>uncollateralized</td><td>20%</td><td>$10,000</td><td>$25,000</td><td>$50,000</td></tr>
+    </tbody>
+  </table>
+  <p class="small">All amounts are 6-decimal USDC. The collateral factor is the borrowing-power
+  multiplier the <code>CreditManager</code> applies; a lower factor means the same collateral unlocks
+  more credit (and at T3, credit is granted with no collateral at all).</p>
+
+  <h3>The super-linear curve</h3>
+  <p>Within a tier&rsquo;s band, the credit limit grows <em>faster than linearly</em> in reputation, so a
+  great agent is meaningfully rewarded over a merely good one &mdash; but it is clamped to the tier cap,
+  so growth is never unbounded:</p>
+<pre><code class="lang-sol">// TierMath.sol — pure, mirrored in packages/shared
+uint256 constant BASE_LIMIT = 50_000e6;   // ceiling, 6-decimal USDC
+int256  constant GAMMA_WAD  = 1.5e18;     // the exponent in (R/1000)^1.5
+uint16  constant SCORE_MAX  = 1000;
+
+function creditLimit(uint16 score) internal pure returns (uint256) {
+    // limit = BASE_LIMIT * (score / 1000) ^ 1.5, then clamp to tierCap(tier)
+    uint256 raw  = _powWad(score, GAMMA_WAD) * BASE_LIMIT / 1e18;
+    uint256 cap  = tierCap(tierOf(score));
+    return raw &lt; cap ? raw : cap;
+}</code></pre>
+  <p>Why 1.5 and not 2.0 or 1.0? A linear curve under-rewards the top of each band; a quadratic curve
+  makes the jump from &ldquo;good&rdquo; to &ldquo;excellent&rdquo; so steep it dwarfs the tier structure.
+  1.5 is the compromise that keeps the tier the <em>hard ceiling</em> while still paying a real premium
+  for reputation inside it. An agent at R=832 has borrowing power around $37,945 &mdash; the exact number
+  the on-chain demo draws against.</p>
+
+  <div class="callout note">
+    <div class="k">One curve, two languages</div>
+    <p>The same math lives in <code>packages/shared</code> as a TypeScript mirror so the engine and the
+    dashboard can show a limit <em>before</em> a transaction lands, and the contract can enforce the
+    identical number when it does. The shared package ships a generated set of ABIs and a tier-math
+    mirror; if the Solidity changes, the mirror is regenerated. The contract is always the authority &mdash;
+    the mirror exists only to make the UI honest.</p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 3 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">3</div>
+    <div class="part-label">Part II &mdash; The On-Chain Spine</div>
+    <h2>The ReputationOracle</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>How an off-chain score becomes a fast, composable on-chain read</li>
+      <li>The <code>Reputation</code> struct and why it carries an epoch and an evidence hash</li>
+      <li>A <strong>k-of-n signer committee</strong> &mdash; no single key can fabricate a score</li>
+      <li>How the evidence hash makes every commit independently auditable</li>
+    </ul>
+  </div>
+
+  <p class="lede">The heavy lifting of reputation &mdash; recency decay, Sybil gating, cohort
+  normalization &mdash; happens off-chain in the engine (Chapter 7). The <code>ReputationOracle</code> is
+  the cheap, trustless <em>read</em> of the result. The engine computes R, then commits it here so that
+  the <code>CreditManager</code> and the dashboard can read a single number without re-running the model.</p>
+
+<pre><code class="lang-sol">struct Reputation {
+    uint16  score;         // R in [0,1000]
+    uint8   tier;          // 0..3, derived via TierMath.tierOf at commit time
+    uint64  updatedAt;     // block.timestamp of last commit
+    uint32  epoch;         // monotonic; increments every recompute
+    bytes32 evidenceHash;  // keccak of the exact scoring inputs
+}
+
+// k-of-n committee: needs `threshold` signatures from distinct authorized signers over a
+// digest bound to (chainId, this oracle, agentId, score, evidenceHash, nextEpoch).
+function commit(uint256 agentId, uint16 score, bytes32 evidenceHash, bytes[] calldata sigs)
+    external                                   // permissionless to submit
+{
+    require(score &lt;= SCORE_MAX, "score");
+    uint32 nextEpoch = _rep[agentId].epoch + 1;
+    bytes32 ethHash = toEthSignedMessageHash(_digest(agentId, score, evidenceHash, nextEpoch));
+
+    address last; uint256 valid;               // recovered signers must strictly ascend (dedup)
+    for (uint256 i; i &lt; sigs.length; ++i) {
+        address rec = ECDSA.recover(ethHash, sigs[i]);
+        require(rec &gt; last &amp;&amp; isSigner[rec]);   // sorted + authorized
+        last = rec; ++valid;
+    }
+    require(valid &gt;= threshold);                // quorum reached
+
+    Reputation storage r = _rep[agentId];
+    r.score = score; r.tier = TierMath.tierOf(score);
+    r.updatedAt = uint64(block.timestamp); r.epoch = nextEpoch; r.evidenceHash = evidenceHash;
+    emit ReputationCommitted(agentId, score, r.tier, nextEpoch, evidenceHash);
+}</code></pre>
+
+  <p>Three reads are exposed for the rest of the protocol: <code>getReputation(agentId)</code> returns
+  the full struct; <code>scoreOf(agentId)</code> and <code>tierOf(agentId)</code> are the hot paths the
+  <code>CreditManager</code> uses when sizing a line.</p>
+
+  <h4>A committee, not a key</h4>
+  <p>The oracle is a <strong>k-of-n signer committee</strong>: a commit needs <code>threshold</code>
+  signatures from distinct, owner-managed signers over the digest above, and submitting the transaction
+  is <em>permissionless</em> &mdash; the quorum&rsquo;s signatures carry the authority, not the sender. So
+  no single key can fabricate a score, and a quorum&rsquo;s signatures cannot be replayed across chains,
+  deployments, or epochs (all three are baked into the digest). It deploys 1-of-1 for dev and 2-of-3 for
+  the demo, and the engine signs each commit with a quorum of the committee keys. This is what makes
+  &ldquo;you can&rsquo;t self-assign reputation&rdquo; literally true &mdash; a user cannot call
+  <code>commit</code> for their own agent. The operator-onboarding flow in Chapter 14 routes through this
+  same gate, which is why the dashboard says the engine <em>attests</em> a starter score.</p>
+
+  <div class="callout">
+    <div class="k">War story</div>
+    <div class="ti">The checksum that 500&rsquo;d</div>
+    <p>The first <code>/onboard</code> call reverted with a 500. The engine derived an agentId from the
+    owner address and packed it for the commit, but a non-checksummed test address tripped viem&rsquo;s
+    <code>encodePacked</code> address validation. The fix was one line &mdash;
+    <code>getAddress(owner.toLowerCase())</code> to normalize the checksum before encoding. The lesson:
+    addresses crossing the JS/EVM boundary must be checksum-normalized at the boundary, not assumed.</p>
+  </div>
+
+  <p>The <code>epoch</code> field is the quiet workhorse. It increments on every recompute, so the engine
+  can detect a stale or replayed commit, and the dashboard can show &ldquo;epoch N&rdquo; as a freshness
+  signal. The <code>evidenceHash</code> binds the commit to the exact inputs that produced it &mdash;
+  anyone can recompute the score from those inputs and check the hash matches. Reputation that can be
+  re-derived is reputation you do not have to trust.</p>
+</section>
+
+<!-- ===================== CHAPTER 4 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">4</div>
+    <div class="part-label">Part II &mdash; The On-Chain Spine</div>
+    <h2>CreditVault &amp; CreditManager</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>Why credit is split across two contracts &mdash; an ERC-4626 pool and a manager on top</li>
+      <li>The inflation-attack mitigation: virtual offset + dead shares</li>
+      <li>How a line is opened, drawn, repaid, and liquidated</li>
+      <li>The borrowing-power formula and the two-slope interest model</li>
+      <li>Which functions are permissionless and which are owner-gated</li>
+    </ul>
+  </div>
+
+  <p class="lede">ERC-4626 is designed for atomic deposit and redemption, not for asynchronous,
+  under-collateralized lending. So the swing keeps two contracts: <code>CreditVault</code> is a clean,
+  composable lender pool; <code>CreditManager</code> sits on top of it and runs the reputation-gated
+  credit logic. Lenders only ever touch the vault; agents only ever touch the manager.</p>
+
+  <h3>CreditVault &mdash; the lender pool</h3>
+  <p>A standard OpenZeppelin ERC-4626 vault over MockUSDC (the demo asset). Lenders deposit and receive
+  <code>scUSDC</code> shares; the share price rises as borrowers repay interest into the idle balance.
+  <code>totalAssets()</code> is idle balance plus <code>totalBorrowed</code>, so interest accrues to
+  lenders implicitly &mdash; there is no explicit yield-distribution call.</p>
+
+  <p>The classic ERC-4626 inflation/donation attack &mdash; where a first depositor donates assets to
+  skew the share price &mdash; is mitigated two ways at once: a <strong>decimals offset of 6</strong>
+  (virtual shares, so the attacker can never own the entire supply) and a <strong>dead-shares seed</strong>
+  at deploy (1 USDC deposited to <code>address(0xdead)</code>). The sole borrow authority is the
+  <code>CreditManager</code>:</p>
+<pre><code class="lang-sol">uint8 constant DECIMALS_OFFSET = 6;     // virtual shares
+// at deploy: vault.deposit(1e6, 0xdead)  // dead shares
+
+function borrow(address to, uint256 amount) external onlyCreditManager { ... }
+function onRepay(uint256 principal)         external onlyCreditManager { ... }
+function writeOff(uint256 principal)        external onlyCreditManager { ... } // on liquidation</code></pre>
+
+  <h3>CreditManager &mdash; the credit logic</h3>
+  <p>The manager reads tier from the oracle, opens a line bound to a specific smart account, and disburses
+  drawn capital <em>only</em> to that account &mdash; never to an arbitrary address. The <code>Line</code>
+  struct snapshots the tier and APR at open time and tracks principal, accrued interest, and collateral.</p>
+  <table>
+    <thead><tr><th>Function</th><th>Who</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>openLine(agentId, account)</code></td><td>permissionless</td><td>Snapshot tier &amp; APR, set limit, bind the account</td></tr>
+      <tr><td><code>draw(agentId, amount)</code></td><td>permissionless</td><td>Accrue interest, check borrowing power, disburse to the bound account only</td></tr>
+      <tr><td><code>repay(agentId, amount)</code></td><td>permissionless</td><td>Repay interest first, then principal; tokens flow to the vault</td></tr>
+      <tr><td><code>postCollateral / withdrawCollateral</code></td><td>permissionless / owner</td><td>Manage collateral held by the manager</td></tr>
+      <tr><td><code>refreshLimit(agentId)</code></td><td>permissionless</td><td>Re-read the oracle and re-size the limit when R crosses a tier</td></tr>
+      <tr><td><code>liquidate(agentId)</code></td><td><strong>onlyOwner</strong></td><td>Write off principal, seize collateral, mark liquidated</td></tr>
+    </tbody>
+  </table>
+  <p>The permissionless-everywhere-but-liquidate design is deliberate: it is what makes the
+  <em>user-signed</em> operator-launch flow in Chapter 18 possible. A user can open their own line and
+  draw their own credit directly from their wallet, because the protocol never needed a privileged caller
+  for the happy path.</p>
+
+  <h4>Borrowing power</h4>
+<pre><code class="lang-sol">fromCollateral   = collateral * 1e4 / collateralFactorBps(tier);
+uncollateralized = tier == T3 ? limit : tier == T2 ? limit / 2 : 0;   // T0/T1 → 0
+power            = min(fromCollateral + uncollateralized, limit);</code></pre>
+  <p>So a T3 agent borrows up to its full limit with zero collateral; a T2 agent gets half its limit
+  uncollateralized plus whatever its collateral supports; T0/T1 must post collateral for everything.</p>
+
+  <h4>Two-slope interest</h4>
+  <p>APR is an Aave/Compound-style utilization curve plus a reputation spread &mdash; worse reputation
+  pays more:</p>
+<pre><code class="lang-sol">BASE_APR_BPS = 200;    // 2% baseline
+KINK_BPS     = 8000;   // 80% utilization kink
+SLOPE1_BPS   = 400;    // gentle below the kink
+SLOPE2_BPS   = 6000;   // steep above it
+// tier spread: T0 +2000bps, T1 +1000, T2 +500, T3 +200</code></pre>
+  <p>Interest accrues lazily &mdash; only when <code>draw</code>, <code>repay</code>, or
+  <code>refreshLimit</code> is called &mdash; so there is no per-block bookkeeping. Default is expensive in
+  reputation terms: a <code>liquidate</code> emits an event the engine reads to post a negative reputation
+  signal, which is the only enforceable &ldquo;collateral&rdquo; in a pseudonymous setting.</p>
+</section>
+
+<!-- ===================== CHAPTER 5 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">5</div>
+    <div class="part-label">Part II &mdash; The On-Chain Spine</div>
+    <h2>The SpendingGuard and the Rogue-Reject</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The six-check ladder, in order, and the typed error each rung throws</li>
+      <li>Why the guard logic is a shared library, not duplicated code</li>
+      <li>The direct <code>GuardedAccount</code> &mdash; the bundler-independent path that guarantees the demo</li>
+      <li>The ERC-7579 modules (validator + hook) for modular smart accounts</li>
+      <li>The live account-abstraction path: the same guard on a real Kernel v3.1 account via Pimlico</li>
+      <li>How spend metering catches an ERC-20 transfer to a non-allowlisted address</li>
+    </ul>
+  </div>
+
+  <p class="lede">This is where the demo lives. The <code>CreditManager</code> decides <em>how much</em>
+  capital an agent has; the <code>SpendingGuard</code> decides <em>where it may go and how fast</em>.
+  A compromised key that tries to drain the account to an attacker is stopped here &mdash; and the
+  rejection is a real, mined, status-0 transaction on the Mantle explorer.</p>
+
+  <h3>The six-check ladder</h3>
+  <p>All the policy logic lives in one pure library, <code>SpendingGuardLib.sol</code>, ported from the
+  Solana ancestor&rsquo;s <code>policy.rs</code>. The order of checks is load-bearing &mdash; it determines
+  which typed error fires first:</p>
+  <div class="fig">
+    <div class="flow">
+      <div class="node bad"><div class="nt">1. Frozen</div><div class="nd">kill switch on &rarr;<br><code>Frozen()</code></div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node bad"><div class="nt">2. Destination</div><div class="nd">payee not allowlisted &rarr;<br><code>DestinationNotAllowed</code></div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node bad"><div class="nt">3. Per-tx cap</div><div class="nd">amount &gt; tier cap &rarr;<br><code>PerTxCapExceeded</code></div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node bad"><div class="nt">4. Daily window</div><div class="nd">rolling 24h &rarr;<br><code>DailyLimitExceeded</code></div></div>
+    </div>
+    <div class="figcap"><b>Figure 5.1</b> &mdash; The ladder. <code>enforce()</code> runs it and, on success,
+    rolls the 24h window and records the spend. <code>preview()</code> mirrors it read-only for off-chain
+    pre-flight, returning a reason code without writing.</div>
+  </div>
+
+<pre><code class="lang-sol">struct Config { uint256 perTxCap; uint256 dailyLimit; bool frozen; }  // 0 = unlimited
+struct Window { uint64 start; uint256 spent; }
+
+function enforce(Config storage cfg, Window storage win, bool destAllowed,
+                 address dest, uint256 amount, uint256 nowTs) external {
+    if (cfg.frozen)                          revert Frozen();
+    if (!destAllowed)                        revert DestinationNotAllowed(dest);
+    if (cfg.perTxCap != 0 &amp;&amp; amount &gt; cfg.perTxCap)
+                                             revert PerTxCapExceeded(cfg.perTxCap, amount);
+    if (nowTs - win.start &gt;= 1 days) { win.start = uint64(nowTs); win.spent = 0; } // roll
+    if (cfg.dailyLimit != 0 &amp;&amp; win.spent + amount &gt; cfg.dailyLimit)
+        revert DailyLimitExceeded(cfg.dailyLimit, win.spent, amount);
+    win.spent += amount;   // record on success
+}</code></pre>
+
+  <h3>Two paths, identical behaviour</h3>
+  <p>The same library backs two account implementations, so the rogue-reject behaves identically no matter
+  which one a deployment uses:</p>
+  <ul class="tight">
+    <li><strong><code>GuardedAccount.sol</code></strong> &mdash; a minimal smart wallet called directly from
+    an EOA or relayer. No bundler, no paymaster. Its <code>execute()</code> decodes the spend, runs
+    <code>enforce()</code>, then calls the target. This is the guaranteed demo path: even if ERC-4337
+    infrastructure on Mantle is down, the revert still happens.</li>
+    <li><strong>ERC-7579 modules</strong> &mdash; <code>SpendingGuardValidator</code> (Type 1, a scoped
+    agent session key) and <code>SpendingGuardHook</code> (Type 4, runs the ladder in <code>preCheck</code>
+    and reverts the UserOp on breach) for modular accounts like Kernel or Safe.</li>
+  </ul>
+
+  <p>Spend metering is shared too, via <code>SpendDecodeLib</code>: it resolves the <em>effective</em>
+  destination and amount of an outgoing call. For native value, that is the call target and
+  <code>msg.value</code>; for an ERC-20 <code>transfer</code>/<code>approve</code>/<code>transferFrom</code>
+  it extracts the token <em>recipient</em> and amount. So &ldquo;transfer USDC to an attacker&rdquo; is
+  caught even though the call target is the USDC contract, not the attacker.</p>
+
+  <div class="callout">
+    <div class="k">War story</div>
+    <div class="ti">Making the revert mine</div>
+    <p>A reverting transaction normally never reaches the chain: viem runs <code>eth_estimateGas</code>
+    first, which throws, and the client aborts before broadcasting. That would have made the rogue-reject
+    invisible. The fix is to pass an <strong>explicit gas limit</strong> (<code>gas: 300_000n</code>) on
+    the spend, which skips estimation and lets the transaction <em>mine as status 0</em> &mdash; carrying
+    the guard&rsquo;s typed error in the receipt. The reverted transaction is the proof. This trick lives
+    in the engine&rsquo;s <code>spend.ts</code> (Chapter 10).</p>
+  </div>
+
+  <p>A <code>GuardedAccountFactory</code> deploys accounts deterministically via CREATE2, with salt
+  <code>keccak256(agentId, owner)</code>, so the engine and dashboard can <code>predict()</code> an
+  account&rsquo;s address before it exists &mdash; which is exactly what the operator-launch stepper does
+  to show the user where their agent will live before they sign the create.</p>
+
+  <h3>The third path: the guard, live on a real Kernel account</h3>
+  <p>The ERC-7579 modules are not a diagram &mdash; they run. <code>pnpm --filter @swing/engine aa-demo</code>
+  (and the dashboard&rsquo;s <em>Spending guard &middot; ERC-7579</em> panel) spin up a real
+  <strong>Kernel v3.1</strong> smart account on Mantle Sepolia, install the
+  <code>SpendingGuardValidator</code> + <code>SpendingGuardHook</code>, and drive spends through a real
+  ERC-4337 bundler with <strong>gas sponsored by Pimlico&rsquo;s paymaster</strong> &mdash; the owner key
+  never holds a wei. The agent&rsquo;s session key (the validator) drives the account; every spend it makes
+  is metered by its attached hook. An allowed, in-bounds payment to the allowlisted merchant <em>mines</em>;
+  a rogue one is <em>refused</em>, carrying the same typed error (<code>DestinationNotAllowed</code>,
+  <code>PerTxCapExceeded</code>) the ladder always throws. The engine exposes it over
+  <code>/aa/state</code>, <code>/aa/prepare</code>, <code>/aa/spend</code> off a shared
+  <code>aa.ts</code> core.</p>
+
+  <p>There is one honest difference in <em>where</em> the rejection surfaces. The
+  <code>GuardedAccount</code> path mines a status-0 transaction &mdash; the revert is on the chain. On the
+  account-abstraction path, a UserOp whose execution would revert is rejected by the bundler at
+  simulation: it never enters the mempool. So the guard makes the malicious operation
+  <em>un-bundleable</em> rather than mined-and-failed &mdash; same policy, same <code>SpendingGuardLib</code>,
+  enforced one layer up, surfaced at the bundler instead of in a block.</p>
+
+  <div class="callout">
+    <div class="k">War story</div>
+    <div class="ti">Five sharp edges in Kernel v3.1</div>
+    <p>Wiring a custom hook onto a real modular account is a gauntlet of undocumented detail, and the chain
+    gives almost no feedback &mdash; Mantle&rsquo;s public RPC blocks tracing, so a wrong move just
+    <em>succeeds and does nothing</em>. Five things had to be exactly right: (1) the validator-with-hook
+    install data is <em>three</em> ABI segments, not the two a popular SDK emits; (2) Kernel slices a leading
+    flag byte off the hook&rsquo;s init data, so the policy must be prefixed with <code>0xff</code> or it
+    decodes to garbage; (3) the UserOp nonce must carry validation-type <code>0x01</code> to route to our
+    validator &mdash; the SDK&rsquo;s helper emits <code>0x00</code>, which Kernel reads as <em>sudo</em> and
+    quietly runs the owner key with no hook at all; (4) the validator must be permitted for the
+    <em>inner</em> <code>execute</code> selector via <code>allowedSelectors</code>, or validation reverts
+    <code>InvalidValidator()</code>; and (5) the callData must be prefixed with the <code>executeUserOp</code>
+    selector so the EntryPoint takes the one path that runs the hook. The bug that cost the most, though, was
+    ours: passing the recipient as the call <em>target</em>, so the account called <code>transfer()</code> on
+    an EOA &mdash; a no-op that returns success. Found by decoding the on-chain <code>UserOperationEvent</code>
+    and reading balances, because nothing ever reverted.</p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 6 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">6</div>
+    <div class="part-label">Part II &mdash; The On-Chain Spine</div>
+    <h2>Deployment, Foundry &amp; Verification</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The Foundry configuration &mdash; solc, EVM version, and the Mantle quirk it accommodates</li>
+      <li>What <code>Deploy.s.sol</code> deploys and how it seeds the vault</li>
+      <li>How all eight contracts were source-verified on Mantlescan via Etherscan V2</li>
+      <li>The test suite: 60 passing Foundry tests across nine files</li>
+    </ul>
+  </div>
+
+  <p class="lede">The spine is seven contracts, deployed to Mantle Sepolia and source-verified so a judge
+  can read the code at <code>sepolia.mantlescan.xyz</code>. Two configuration choices made this work; both
+  are worth knowing because both cost time to discover.</p>
+
+<pre><code class="lang-sol">// foundry.toml
+[profile.default]
+solc          = "0.8.28"
+evm_version   = "cancun"   // OZ 5.6 emits MCOPY; Mantle supports Cancun
+optimizer     = true
+optimizer_runs= 200
+bytecode_hash = "none"
+
+[etherscan]
+mantle_sepolia = { url = "https://api.etherscan.io/v2/api?chainid=5003", key = "${MANTLESCAN_API_KEY}" }
+mantle         = { url = "https://api.etherscan.io/v2/api?chainid=5000", key = "${MANTLESCAN_API_KEY}" }</code></pre>
+
+  <p>The <code>evm_version = cancun</code> line matters: OpenZeppelin 5.6 emits the <code>MCOPY</code>
+  opcode, and Mantle&rsquo;s OP-Stack supports it &mdash; but it had to be re-confirmed on Sepolia before the
+  demo deploy. The <code>[etherscan]</code> URLs point at the <strong>Etherscan V2 unified multichain
+  endpoint</strong>; the old per-host Mantlescan V1 URLs are dead, and discovering that was a half-day
+  detour.</p>
+
+  <h3>The deploy script</h3>
+  <p><code>script/Deploy.s.sol</code> deploys all seven contracts and seeds the vault in one run:
+  MockUSDC, ReputationOracle (with the oracle signer), CreditVault (asset = MockUSDC,
+  <code>scUSDC</code>), CreditManager (oracle + vault), GuardedAccountFactory, and the two ERC-7579
+  module singletons. It then mints 1.1M USDC to the deployer, seeds 1 USDC of dead shares to
+  <code>0xdead</code>, and deposits 100k USDC as demo liquidity. It writes every address to
+  <code>deployments/5003.json</code>.</p>
+
+  <div class="callout note">
+    <div class="k">Sandbox note</div>
+    <p>In a sandboxed environment, <code>forge script --broadcast</code>&rsquo;s fork backend could not hold
+    a stable connection to the public RPC. The reliable path was deploying contract-by-contract with
+    <code>forge create</code> plus retries &mdash; single sequential transactions. From a normal terminal,
+    the one-command <code>forge script</code> deploy works fine.</p>
+  </div>
+
+  <h3>Verification &amp; tests</h3>
+  <p>All eight contracts &mdash; the seven spine contracts plus agent #1&rsquo;s deployed
+  <code>GuardedAccount</code> &mdash; are source-verified on Mantlescan using the Etherscan V2 unified
+  endpoint (<code>--verifier-url "https://api.etherscan.io/v2/api?chainid=5003"</code>). The test suite is
+  <strong>60 passing tests across nine files</strong>: <code>TierMath.t.sol</code>,
+  <code>ReputationOracle.t.sol</code>, <code>CreditVault.t.sol</code>, <code>CreditStack.t.sol</code>,
+  <code>CreditManager</code> integration, <code>GuardedAccount.t.sol</code>,
+  <code>GuardedAccountFactory.t.sol</code>, and <code>SpendingGuardModules.t.sol</code> &mdash; the
+  rogue-tx revert is tested on every rung of the ladder.</p>
+</section>
+
+<!-- ===================== CHAPTER 7 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">7</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>The Scoring Core</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The eight inputs that feed a reputation score and how each is normalized to [0,1]</li>
+      <li>The exact weighted formula, the sigmoid, and the Sybil gate</li>
+      <li>Recency decay: a 30-day half-life so the score reacts to fresh activity</li>
+      <li>The hard floor that caps thin-history and low-passport agents at T0</li>
+      <li>The deterministic evidence hash that makes a score auditable by anyone</li>
+    </ul>
+  </div>
+
+  <p class="lede">The engine is Node/TypeScript. Its heart is <code>scoring.ts</code> &mdash; a pure,
+  deterministic function from an agent&rsquo;s history to a number in <code>[0,1000]</code>. Pure and
+  deterministic are the whole point: anyone can re-run it and get the same answer, which is what makes the
+  on-chain evidence hash meaningful.</p>
+
+  <h3>Inputs, normalized</h3>
+  <table>
+    <thead><tr><th>Symbol</th><th>Input</th><th>Normalization</th></tr></thead>
+    <tbody>
+      <tr><td><code>zPnl</code></td><td>risk-adjusted realized PnL</td><td>z-score vs cohort, clipped [-3, 3]</td></tr>
+      <tr><td><code>win</code></td><td>win rate</td><td>&lambda;-weighted mean &isin; [0,1]</td></tr>
+      <tr><td><code>oneMinusDd</code></td><td>1 &minus; max drawdown</td><td>[0,1], higher is better</td></tr>
+      <tr><td><code>consistency</code></td><td>Sharpe-like mean/&sigma; of returns</td><td>squashed to [0,1]</td></tr>
+      <tr><td><code>jobs</code></td><td>completed jobs / validations</td><td>log-scaled to [0,1]</td></tr>
+      <tr><td><code>validation</code></td><td>avg validation response</td><td>/100</td></tr>
+      <tr><td><code>age</code></td><td>account age &amp; continuity</td><td>log-scaled [0,1]</td></tr>
+      <tr><td><code>sybil</code></td><td>Sybil penalty from passport</td><td>(15 &minus; passport)/15, [0,1]</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The formula</h3>
+<pre><code class="lang-ts">// scoring.ts — λ = 0.5^(ageDays / 30): a 30-day half-life on every event
+const raw =
+    0.30 * zPnl + 0.15 * win + 0.15 * oneMinusDd + 0.15 * consistency +
+    0.08 * jobs + 0.10 * validation + 0.07 * age;
+
+let R = 1000 * sigmoid(1.2 * raw);     // K = 1.2 tunes the spread
+R = R * (1 - 0.5 * sybil);             // multiplicative Sybil gate
+
+// hard floor: thin history or weak passport can never exceed T0
+if (passportScore &lt; 15 || trades.length &lt; 5) R = Math.min(R, 249);</code></pre>
+
+  <p>Every aggregate is a &lambda;-weighted mean, so an event from 30 days ago counts half as much as one
+  today, and one from 60 days ago a quarter. The score therefore reacts immediately to new on-chain
+  activity and lets old losses decay away &mdash; a strong recent run can lift an agent into T3, while a
+  long-dormant or thinly-traded account is held at T0 no matter how good its handful of trades look.</p>
+
+  <h3>The evidence hash</h3>
+<pre><code class="lang-ts">evidenceHash = keccak256(JSON.stringify({
+  v: 1, score, weights, k: 1.2, halfLifeDays: 30,
+  trades, validations, jobsCompleted, accountAgeDays, passportScore, now,
+}));   // committed on-chain alongside the score</code></pre>
+  <p>This is the link back to Chapter 3. The hash is a canonical fingerprint of every input plus the
+  result. Commit it on-chain and the reputation becomes recomputable: a sceptic feeds the same inputs to
+  the same public function, hashes them, and checks the on-chain commit. Seven vitest cases lock the
+  behaviour &mdash; recency halving, T3 promotion for strong agents, the T0 floor for weak passports and
+  thin history, decay of old losses, ranking, and hash determinism.</p>
+</section>
+
+<!-- ===================== CHAPTER 8 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">8</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>The Oracle Bridge &amp; Chain Client</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>How <code>oracle.ts</code> turns a computed score into a signed on-chain commit</li>
+      <li>The viem client setup and the one transport flag that makes Mantle&rsquo;s public RPC reliable</li>
+      <li>The typed contract instances the rest of the engine reads through</li>
+    </ul>
+  </div>
+
+  <p class="lede"><code>oracle.ts</code> is the seam between the pure scorer and the chain.
+  <code>commitScore(agentId, inputs)</code> computes the score off-chain, then sends
+  <code>ReputationOracle.commit(agentId, score, evidenceHash)</code> with the engine&rsquo;s signer and
+  waits for the receipt. <code>commitRaw(agentId, score, evidenceHash)</code> is the same write with a
+  pre-computed score &mdash; the path operator-onboarding uses to attest a starter reputation.</p>
+
+  <h3>The viem client</h3>
+  <p><code>chain.ts</code> builds the public client, the wallet client (only if a signer key is set), and a
+  set of typed contract instances. One detail is load-bearing:</p>
+<pre><code class="lang-ts">// chain.ts — Mantle's public RPC rejects default concurrent batches.
+export const publicClient = createPublicClient({
+  chain: mantleSepoliaTestnet,
+  transport: http(RPC_URL, { batch: false, retryCount: 10, retryDelay: 600, timeout: 25_000 }),
+});</code></pre>
+  <p><code>batch: false</code> forces sequential JSON-RPC calls. Without it, viem coalesces reads into a
+  single batched request and Mantle&rsquo;s public endpoint intermittently rejects them; with sequential
+  calls and retries, reads are reliable. The registry scanner (Chapter 9) reads ids one at a time for the
+  same reason.</p>
+
+  <p>The typed instances are the engine&rsquo;s read surface: <code>oracle</code> (getReputation, commit),
+  <code>manager</code> (getLine), <code>vault</code> (totalAssets, totalBorrowed, availableLiquidity),
+  <code>usdc</code> (balanceOf, transfer, mint), <code>hook</code> (previewSpend), and a
+  <code>guardedAccountAt(address)</code> factory. Everything downstream &mdash; the API, the indexer, the
+  spend executor &mdash; reads through these rather than constructing its own calls.</p>
+</section>
+
+<!-- ===================== CHAPTER 9 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">9</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>The HTTP API Surface</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The full endpoint map the dashboard consumes</li>
+      <li>How <code>/earn</code> and <code>/recompute</code> turn trading into an on-chain reputation commit</li>
+      <li>The background indexer and registry scanner that keep reads instant</li>
+    </ul>
+  </div>
+
+  <p class="lede">The engine speaks HTTP over Hono on port 8799. Every route is thin: it reads the chain or
+  the scorer, commits when needed, and returns JSON the dashboard renders. The frontend never talks to the
+  chain for reads &mdash; it talks to this API.</p>
+
+  <table>
+    <thead><tr><th>Method &amp; path</th><th>What it returns / does</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /health</code></td><td><code>{ok, chainId, signer, dataSource, explainer, byreal}</code></td></tr>
+      <tr><td><code>GET /deployment</code></td><td>All deployed contract addresses</td></tr>
+      <tr><td><code>GET /agents</code></td><td>Leaderboard (cached registry scan of ids 1&ndash;8)</td></tr>
+      <tr><td><code>GET /agents/:id</code></td><td>Reputation, credit line, and account USDC balance</td></tr>
+      <tr><td><code>GET /agents/:id/track</code></td><td>Trading record: venue, recent trades, PnL/sharpe/drawdown/equity</td></tr>
+      <tr><td><code>POST /agents/:id/recompute</code></td><td>Recompute from current data &rarr; commit &rarr; explanation</td></tr>
+      <tr><td><code>POST /agents/:id/earn</code></td><td>Simulate winning trades &rarr; recompute &rarr; commit (the live demo beat)</td></tr>
+      <tr><td><code>GET /events</code></td><td>Recent on-chain events (ring buffer)</td></tr>
+      <tr><td><code>GET /vault</code></td><td>Vault stats: assets, borrowed, available, utilization</td></tr>
+      <tr><td><code>POST /preview-spend</code></td><td>Dry-run a spend &rarr; reason code + label</td></tr>
+      <tr><td><code>POST /spend</code></td><td>Execute a <em>real</em> guarded spend (Chapter 10)</td></tr>
+      <tr><td><code>GET&nbsp;/x402/:service&nbsp;&middot;&nbsp;POST&nbsp;/x402/:service/buy</code></td><td>The HTTP-402 round-trip (Chapter 11)</td></tr>
+      <tr><td><code>GET /byreal/market</code></td><td>Live Byreal CLMM context (Chapter 13)</td></tr>
+      <tr><td><code>GET&nbsp;/onchain&nbsp;&middot;&nbsp;POST&nbsp;/onchain/commit/:id</code></td><td>Verified Mantle-mainnet PnL record &amp; commit (Chapter 13)</td></tr>
+      <tr><td><code>POST /onboard</code></td><td>Attest a starter reputation for a wallet&rsquo;s derived agent (Chapter 14)</td></tr>
+    </tbody>
+  </table>
+
+  <p>The <code>/earn</code> endpoint is the demo&rsquo;s pulse: it appends a handful of winning trades to the
+  agent&rsquo;s history, recomputes the score, commits it to the oracle as a real transaction, and returns
+  the before/after scores plus a GLM explanation. The dashboard&rsquo;s &ldquo;Run a trading session&rdquo;
+  button is a single call to it.</p>
+
+  <h4>Background tasks</h4>
+  <p>Two loops keep reads instant. <code>startIndexer()</code> scans the oracle, manager, and hook for new
+  events every 12 seconds (backfilling 2,000 blocks on first run) and pushes them into a 200-entry ring
+  buffer, so <code>/events</code> is an in-memory read. <code>startRegistry()</code> sequentially scans
+  agent ids 1&ndash;8 every 20 seconds and caches those with a score or an open line, so the
+  <code>/agents</code> leaderboard never blocks on the chain.</p>
+</section>
+
+<!-- ===================== CHAPTER 10 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">10</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>Live Spend &amp; the On-Chain Rogue-Reject</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>How <code>spend.ts</code> submits a real spend through the GuardedAccount</li>
+      <li>The explicit-gas trick that makes a rejected spend <em>mine</em> as status 0</li>
+      <li>Why a reverted transaction is the strongest possible proof</li>
+    </ul>
+  </div>
+
+  <p class="lede">The signature beat from Chapter 5, made live. <code>spend.ts</code> exposes
+  <code>executeSpend({accountAddr, to, amount, ensureFunds})</code>, which submits a real
+  <code>GuardedAccount.execute()</code> to Mantle Sepolia and returns the mined outcome.</p>
+
+<pre><code class="lang-ts">// spend.ts — the explicit gas limit is the whole trick
+const hash = await walletClient.writeContract({
+  ...guardedAccountAt(accountAddr),
+  functionName: "execute",
+  args: [to, value, data],
+  gas: 300_000n,                 // skip eth_estimateGas, which would throw on a guarded revert
+});
+const rcpt = await publicClient.waitForTransactionReceipt({ hash });
+return { txHash: hash, status: rcpt.status, to, amount, reason };  // status: "success" | "reverted"</code></pre>
+
+  <p>Without the explicit <code>gas</code>, viem estimates gas first, the guard&rsquo;s revert throws, and
+  the transaction never broadcasts &mdash; the rejection would be a client-side exception, not an on-chain
+  fact. With it, the transaction <strong>mines as status 0</strong>, carrying the guard&rsquo;s typed error
+  in the receipt. An allowlisted, in-bounds spend mines as status 1. <code>previewSpend</code> returns the
+  reason code first so the UI can label the verdict, and <code>ensureFunds</code> mints test USDC into the
+  account when it is low so the demo never stalls on a dry balance.</p>
+
+  <div class="callout note">
+    <div class="k">Why a revert beats an error message</div>
+    <p>A judge can open the reverted transaction on Mantlescan and see <code>status 0</code>,
+    <code>Destination not allowlisted</code>, and an attacker balance of zero. The funds never moved, and
+    the proof is a public, immutable receipt &mdash; not a screenshot of an app saying &ldquo;blocked&rdquo;.
+    This is the difference the whole project is built to demonstrate.</p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 11 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">11</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>x402 Agent-to-Agent Payments</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The HTTP-402 flow: <code>402 + accepts</code> &rarr; <code>X-PAYMENT</code> &rarr; <code>200 + X-PAYMENT-RESPONSE</code></li>
+      <li>On-chain USDC settlement, Transfer-log verification, and replay protection</li>
+      <li>How proof-of-payment loops back into the provider&rsquo;s reputation</li>
+    </ul>
+  </div>
+
+  <p class="lede">Agents do not only borrow &mdash; they earn. <code>x402.ts</code> implements a faithful
+  HTTP-402 flow so one agent can buy a service (here, agent #1&rsquo;s momentum signal) from another, with
+  real settlement on Mantle. The ERC-8004 spec explicitly points at x402 for payment-enriched feedback;
+  the swing closes that loop.</p>
+
+  <div class="fig">
+    <div class="flow">
+      <div class="node"><div class="nt">GET service</div><div class="nd">no payment</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node bad"><div class="nt">402</div><div class="nd">+ accepts<br>(price, payTo)</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">settle()</div><div class="nd">USDC transfer<br>on Mantle</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node ok"><div class="nt">200</div><div class="nd">+ X-PAYMENT-RESPONSE<br>+ signal</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">reputation</div><div class="nd">proof-of-payment<br>&rarr; commit</div></div>
+    </div>
+    <div class="figcap"><b>Figure 11.1</b> &mdash; The x402 round-trip. A GET without payment returns 402 and
+    the requirements; the buyer settles on-chain, retries with an <code>X-PAYMENT</code> header, and the
+    server verifies the Transfer log before delivering the signal.</div>
+  </div>
+
+  <p>The verifier is strict. It decodes the base64 <code>X-PAYMENT</code> token to a tx hash, fetches the
+  receipt, and confirms a <code>Transfer</code> log to <code>payTo</code> of at least the required amount.
+  Replays are blocked by a <code>consumed</code> set keyed on the lowercased tx hash &mdash; a payment can
+  redeem a service exactly once. On success, the engine calls <code>recordPaidJob</code> on the provider,
+  recomputes its score, commits it, and returns an <code>X-PAYMENT-RESPONSE</code> header. The
+  <code>POST /x402/:service/buy</code> endpoint runs the whole round-trip autonomously for the dashboard,
+  returning the quote, the settlement tx, the delivered payload, and the reputation delta.</p>
+</section>
+
+<!-- ===================== CHAPTER 12 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">12</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>Z.ai GLM Explanations</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>How each credit decision is narrated in plain language by Z.ai GLM</li>
+      <li>The configuration that makes it fast and the fallback that makes it reliable</li>
+      <li>Why the fact sheet deliberately omits dollar figures</li>
+    </ul>
+  </div>
+
+  <p class="lede">Z.ai is both a sponsor and a judge, so using GLM as the reasoning layer is strategically
+  smart and technically sound. <code>explain.ts</code> narrates each reputation/credit move &mdash;
+  &ldquo;Reputation 500 &rarr; 750/1000 (T2 Established). Promoted. Drivers: win-rate 75%, drawdown-health
+  95%, consistency 88%, validation 94%. Sybil penalty 10%.&rdquo;</p>
+
+<pre><code class="lang-ts">// glm.ts — fast, and never blocks a request
+const res = await fetch(`${ZAI_BASE_URL}/chat/completions`, {
+  method: "POST",
+  headers: { Authorization: `Bearer ${ZAI_API_KEY}`, "content-type": "application/json" },
+  body: JSON.stringify({
+    model: ZAI_MODEL,                       // glm-4.5-flash (free tier)
+    temperature: 0.4, max_tokens: 256,
+    thinking: { type: "disabled" },         // reasoning off → ~3s replies, not 15s
+    messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: factSheet }],
+  }),
+  signal: AbortSignal.timeout(15_000),      // a slow provider never stalls the request
+});</code></pre>
+
+  <p>Two settings are load-bearing. <code>thinking: { type: "disabled" }</code> turns off the
+  reasoning-model chain so replies come back in about three seconds instead of timing out; the free
+  <code>glm-4.5-flash</code> tier is used because <code>glm-4.6</code> needs a paid balance. The 15-second
+  abort means a slow or unreachable provider degrades gracefully &mdash; <code>explain()</code> falls back
+  to a deterministic template and logs the fallback, and <code>/health</code> reports
+  <code>explainer: glm</code> only when the key is live.</p>
+
+  <div class="callout">
+    <div class="k">War story</div>
+    <div class="ti">The number that didn&rsquo;t match</div>
+    <p>An early fact sheet handed GLM a credit-limit figure, and the model cited &ldquo;$37,945&rdquo; in its
+    prose while the credit panel rendered &ldquo;$35,777&rdquo; from a live contract read. Two sources of
+    truth for one number is one too many. The fix: the fact sheet now carries only score, tier, stance, and
+    drivers &mdash; <em>no dollar figures</em>. Dollar amounts come exclusively from on-chain contract reads,
+    so the narration can never contradict the chain.</p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 13 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">13</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>Byreal Context &amp; the On-Chain PnL Indexer</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>How the engine reads live Byreal CLMM market data through the official CLI &mdash; honestly framed</li>
+      <li>How it reconstructs realized PnL from a real Mantle trader&rsquo;s DEX swaps, with no price oracle</li>
+      <li>The stablecoin-numeraire, average-cost method that turns swaps into PnL</li>
+    </ul>
+  </div>
+
+  <h3>Byreal market context</h3>
+  <p><code>byreal.ts</code> shells out to the official <code>@byreal-io/byreal-cli</code> for real
+  <code>overview</code> data (TVL, 24h volume, fees, pool count), caches it for 60 seconds, and degrades
+  gracefully if the CLI is absent. The framing is honest: Byreal&rsquo;s CLMM is on Solana, so this is live
+  <em>signal context</em> the agent reads &mdash; reputation, credit, and safety stay on Mantle. The
+  dashboard labels it as such.</p>
+
+  <h3>The verified on-chain PnL record</h3>
+  <p>The honest answer to &ldquo;is this real on-chain activity?&rdquo; lives in
+  <code>data/mantleOnchain.ts</code>. It reads a real trader&rsquo;s ERC-20 transfers on Mantle
+  <strong>mainnet</strong> (chain 5000) via the Etherscan V2 account API, groups them by transaction into
+  swaps, and reconstructs realized PnL in USD &mdash; using stablecoin legs as the num&eacute;raire, with no
+  price oracle.</p>
+<pre><code class="lang-ts">// data/mantleOnchain.ts — stablecoins are the numéraire
+const STABLES = new Set(["USDC","USDT","USDT0","USDe","USDY","mUSD","axlUSDC"]);
+// per clean 1-in / 1-out swap:
+//   stable OUT, token IN  → BUY:  add to position (qty, avg cost)
+//   stable IN,  token OUT → SELL: realize PnL = stableIn − avgCost*qty, close position
+// multi-hop / LP transfers are skipped for clean reconstruction.</code></pre>
+  <p>The result is a full record: realized PnL, win rate, closed trades, open positions, a span in days, and
+  every trade as a clickable mainnet transaction. Those reconstructed trades become
+  <code>ScoreInputs</code> the same scorer consumes, so the engine produces a real, derived score
+  (the discovered trader at <code>0x4993&hellip;0814</code> scores 710, T2 &mdash; 84% win, +$768 realized). The
+  <code>POST /onchain/commit/:id</code> route commits that derived score to the Sepolia oracle for an
+  isolated agent slot &mdash; live swaps &rarr; realized PnL &rarr; reputation &rarr; on-chain commit, end to
+  end, with nothing simulated.</p>
+
+  <div class="callout note">
+    <div class="k">Discovered, not hand-picked</div>
+    <p>The benchmark wallet is <em>found</em> on-chain, not curated. A helper
+    (<code>pnpm --filter @swing/engine scan --router &lt;dex-router&gt;</code>) pulls recent traders from a
+    DEX router and ranks them by the engine&rsquo;s <em>own</em> reputation score &mdash; so the wallet on
+    screen is genuinely one the engine rates highly (here, 710/T2), not a high-volume break-even bot. It
+    stays a labelled <em>reference benchmark</em> on the <code>/agents</code> page, not the holdings of the
+    selected agent, because clean PnL reconstruction needs stablecoin-legged round-trips, which most
+    addresses lack. Point it at a RealClaw agent by dropping its address into
+    <code>MANTLE_TRADER_ADDRESS</code>.</p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 14 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">14</div>
+    <div class="part-label">Part III &mdash; The Reputation Engine</div>
+    <h2>Operator Onboarding</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>How a wallet becomes a credit-backed agent without self-assigning reputation</li>
+      <li>The deterministic agentId derivation from the owner address</li>
+      <li>Why this single endpoint is what makes the whole launch flow user-owned</li>
+    </ul>
+  </div>
+
+  <p class="lede"><code>POST /onboard</code> is the bridge between &ldquo;a person with a wallet&rdquo; and
+  &ldquo;an agent with credit.&rdquo; The engine attests a starter reputation for the wallet&rsquo;s derived
+  agent &mdash; the user cannot do this themselves, because only the engine signer may write the oracle
+  (Chapter 3).</p>
+
+<pre><code class="lang-ts">// api.ts — deterministic, collision-free for 900k addresses
+const owner   = getAddress(body.owner.toLowerCase());          // checksum-normalize at the boundary
+const agentId = 100_000n + (BigInt(owner) % 900_000n);         // derive a 6-digit id from the wallet
+await commitRaw(agentId, 700, evidenceHashFor(owner));         // starter score 700 → tier T2
+return { agentId, owner, score: 700, tier: 2, tierName: "Established", evidenceHash, txHash };</code></pre>
+
+  <p>The starter score of 700 lands the new agent in T2 &mdash; enough to unlock a meaningful,
+  partially-uncollateralized line so the demo has something to draw against. The id is derived from the
+  owner address (<code>100_000 + owner % 900_000</code>), so it is deterministic and unique per wallet, but
+  it sits far outside the 1&ndash;8 range the registry scanner enumerates &mdash; which is why the frontend
+  remembers launched agents in local storage (Chapter 18).</p>
+
+  <p>This one endpoint is what turns the operator-launch stepper into a genuinely user-owned flow: the engine
+  attests reputation (oracle-signed), and then the user&rsquo;s own wallet signs everything else &mdash;
+  create account, open line, draw. Reputation &rarr; credit &rarr; spend, owned end-to-end by the person at
+  the keyboard.</p>
+</section>
+
+<!-- ===================== CHAPTER 15 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">15</div>
+    <div class="part-label">Part IV &mdash; The Frontend</div>
+    <h2>The Design System</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The monochrome &ldquo;Entrypoint Labs&rdquo; aesthetic and why red is the only hue</li>
+      <li>The oklch near-black palette and the trust-tier brightness ramp</li>
+      <li>Geist typography, the card system, and the falling-stars canvas</li>
+      <li>Why the dashboard runs as a production build, not a dev server</li>
+    </ul>
+  </div>
+
+  <p class="lede">The dashboard is Next.js 15 with Tailwind v4, and its look is deliberate: a near-black,
+  zero-saturation palette where the only colour is red, reserved exclusively for danger &mdash; the
+  rogue, the blocked, the reverted. Every other meaning is carried by <em>brightness</em>. A judge should
+  feel, before reading a word, that this is a serious instrument, not a toy.</p>
+
+  <h3>The palette</h3>
+  <p>Colours are defined as oklch CSS variables in <code>globals.css</code>. The achromatic ramp runs from
+  paper (near-black background) to ink (near-white text); red is the single chromatic exception.</p>
+  <table>
+    <thead><tr><th>Token</th><th>Value</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>--color-paper</code></td><td>oklch(0.145 0 0)</td><td>page background</td></tr>
+      <tr><td><code>--color-card</code></td><td>oklch(0.178 0 0)</td><td>panel background</td></tr>
+      <tr><td><code>--color-ink</code></td><td>oklch(0.985 0 0)</td><td>primary text (near-white)</td></tr>
+      <tr><td><code>--color-muted / --color-faint</code></td><td>oklch(0.78 / 0.6)</td><td>secondary / tertiary text</td></tr>
+      <tr><td><code>--color-line / line-strong</code></td><td>oklch(0.27 / 0.37)</td><td>hairline borders / focus</td></tr>
+      <tr><td><code>--color-danger</code></td><td>oklch(0.71 0.19 23)</td><td><span class="red">the only hue</span> &mdash; rogue / blocked</td></tr>
+      <tr><td><code>--color-t0 &hellip; t3</code></td><td>oklch 0.6 &rarr; 0.985</td><td>trust tiers, dim &rarr; pure white</td></tr>
+    </tbody>
+  </table>
+
+  <p>The tier ramp is the cleverest part. A reputation score is encoded as <em>brightness</em>: T0 is a dim
+  grey, T3 is pure white. A glance at a leaderboard reads as a gradient of trust without a single coloured
+  pixel &mdash; which keeps red meaningful. When the eye finds red, something is wrong, every time.</p>
+
+  <h3>Type, cards, and stars</h3>
+  <p>Typography is Geist Sans for display and body, Geist Mono for addresses, hashes, and amounts (with
+  <code>tabular-nums</code> so trailing zeros line up). Cards share a 12px radius, a 1px line border, and a
+  subtle inset highlight over a deep outer shadow &mdash; a quiet, instrument-panel feel. Behind everything,
+  <code>StarField.tsx</code> paints 120 twinkling, slowly-falling stars onto a canvas at z-index &minus;10,
+  ported from the Entrypoint Labs site &mdash; cosmic, distant-future, never distracting.</p>
+
+  <div class="callout note">
+    <div class="k">Production, not dev</div>
+    <p>The dashboard is served with <code>next start</code> (production), reading the engine on
+    <code>:8799</code>. That means every UI change needs a <code>pnpm build</code> and a restart to appear
+    &mdash; a deliberate choice for a stable demo surface, and a thing to remember when iterating.</p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 16 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">16</div>
+    <div class="part-label">Part IV &mdash; The Frontend</div>
+    <h2>The Pages</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The five routes and what each one is for</li>
+      <li>How the landing page sells the thesis with live stats</li>
+      <li>The console as the operational hub, and the two product entry points</li>
+    </ul>
+  </div>
+
+  <p class="lede">Five routes, each a distinct job in the story: convince, operate, rank, lend, launch.</p>
+
+  <table>
+    <thead><tr><th>Route</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code> landing</td><td>The thesis in one screen: hero line (&ldquo;Agents earn trust. Capital follows. Rogue spends revert.&rdquo;), live stats from <code>/vault</code> and <code>/agents</code>, a five-step &ldquo;how it works&rdquo;, and the five-piece architecture overview.</td></tr>
+      <tr><td><code>/console</code> hub</td><td>The operational dashboard for one agent &mdash; reputation gauge, credit panel, trading record, activity feed, x402, and the spending-control simulator. Polls the engine every 7s.</td></tr>
+      <tr><td><code>/agents</code> registry</td><td>A brightness-ranked leaderboard of scored agents, the connected wallet&rsquo;s &ldquo;Your agents&rdquo; section, and the labelled real-world on-chain benchmark trader. Refreshes every 8s.</td></tr>
+      <tr><td><code>/vault</code> lend</td><td>The ERC-4626 pool: TVL, utilization, and the user-signed lender flow (faucet &rarr; approve &rarr; deposit &rarr; withdraw).</td></tr>
+      <tr><td><code>/launch</code> operator</td><td>The four-step stepper that turns a wallet into a credit-backed agent &mdash; engine attests, then the wallet signs create &rarr; open line &rarr; draw.</td></tr>
+    </tbody>
+  </table>
+
+  <p>The landing page is unapologetically a pitch: it leads with the rogue-reject and the earn&rarr;credit
+  loop in the first two beats, exactly as the rubric rewards. The console is where a judge watches the loop
+  happen for a single agent; <code>/vault</code> and <code>/launch</code> are where they can <em>participate</em>
+  with their own wallet rather than watch a server-signed puppet.</p>
+</section>
+
+<!-- ===================== CHAPTER 17 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">17</div>
+    <div class="part-label">Part IV &mdash; The Frontend</div>
+    <h2>The Components</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>How the console composes a dozen panels into one coherent hub</li>
+      <li>The reputation gauge, credit panel, and tier ladder</li>
+      <li>The track record, activity feed, and the three live-integration panels</li>
+      <li>Why every panel links to a real Mantle transaction</li>
+    </ul>
+  </div>
+
+  <p class="lede"><code>Console.tsx</code> is the composition. In order, it stacks: the agent header and
+  reputation gauge, the credit panel, a live Byreal market strip, the trading record, the activity feed, the
+  x402 panel, and the spending-control simulator. It fetches agent state, track, and events every 7 seconds;
+  the &ldquo;Run a trading session&rdquo; button fires <code>api.earn()</code>, commits on-chain, and animates
+  the score moving.</p>
+
+  <h3>Reputation &amp; credit</h3>
+  <ul class="tight">
+    <li><strong>ReputationGauge.tsx</strong> &mdash; an SVG circular gauge (0&ndash;1000, ticks at 250/500/750)
+    with a spring-animated fill in the tier&rsquo;s brightness, a counting score via framer-motion&rsquo;s
+    <code>useSpring</code>, and a tier badge.</li>
+    <li><strong>CreditPanel.tsx</strong> &mdash; limit, utilization bar, drawn amount, available balance, APR,
+    and collateral; or a dashed &ldquo;no line yet&rdquo; state. It embeds <strong>TierLadder.tsx</strong>,
+    four bars filling up to the current tier.</li>
+  </ul>
+
+  <h3>Record, activity, and live integrations</h3>
+  <ul class="tight">
+    <li><strong>TrackRecord.tsx</strong> &mdash; realized PnL (green/red by sign), an SVG sparkline equity
+    curve, win-rate / count / drawdown metrics, and the last six trades.</li>
+    <li><strong>ActivityFeed.tsx</strong> &mdash; a live list of on-chain Swing events
+    (ReputationCommitted, LineOpened, Drawn, Repaid, Liquidated), each a clickable explorer link.</li>
+    <li><strong>SpendingControls.tsx</strong> &mdash; the rogue-reject simulator: &ldquo;Pay merchant&rdquo;
+    (allowlisted, mines status 1), &ldquo;Drain to attacker&rdquo; (not allowlisted, mines status 0, the card
+    shakes red), and &ldquo;Oversized payout&rdquo; (trips the per-tx cap). Every button submits a real tx and
+    links to its receipt.</li>
+    <li><strong>X402Panel.tsx</strong> &mdash; the buy-a-signal round-trip with live settlement links and the
+    reputation delta.</li>
+    <li><strong>ByrealMarketStrip.tsx</strong> &mdash; live Solana CLMM stats, refreshing every 60s.</li>
+    <li><strong>OnchainPanel.tsx</strong> &mdash; the reference real-Mantle-trader record with a
+    &ldquo;Commit this record &rarr; reputation&rdquo; button (writing to an isolated agent slot).</li>
+  </ul>
+
+  <p>Two more carry the brand: <strong>StarField.tsx</strong> (the canvas backdrop) and <strong>ui.tsx</strong>
+  (the shared primitives &mdash; <code>Card</code>, <code>Label</code>, <code>Dot</code>,
+  <code>ExplorerLink</code>, <code>Copyable</code>). <code>tiers.ts</code> centralizes the tier styling
+  (<code>TIER_STYLE</code> and <code>tierHex</code>) so brightness is defined once. The discipline across all
+  of them is the same: <strong>no mocks</strong> &mdash; every verdict on screen is a mined Mantle Sepolia
+  transaction with a status code and a link.</p>
+</section>
+
+<!-- ===================== CHAPTER 18 ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">18</div>
+    <div class="part-label">Part IV &mdash; The Frontend</div>
+    <h2>Wallet-Connected Product Flows</h2>
+  </div>
+  <div class="learn">
+    <div class="h">What you will learn in this chapter</div>
+    <ul>
+      <li>The wagmi v2 wallet stack and the single-chain config</li>
+      <li>Network handling: auto-switch, the wrong-network banner, and gated signing buttons</li>
+      <li>The lender flow on <code>/vault</code> &mdash; user-signed ERC-4626</li>
+      <li>The operator-launch stepper on <code>/launch</code></li>
+      <li>Why launched agents are remembered in local storage</li>
+    </ul>
+  </div>
+
+  <p class="lede">The guided demo proves the loop without the viewer owning anything. These flows let a judge
+  <em>use</em> their own wallet &mdash; lend real test capital, or launch their own credit-backed agent and
+  sign every step.</p>
+
+  <h3>The wallet stack</h3>
+  <p><code>lib/wagmi.ts</code> is a single-chain wagmi v2 config: <code>mantleSepoliaTestnet</code>, the
+  <code>injected()</code> connector (MetaMask / Rabby / Brave), and an HTTP transport to
+  <code>rpc.sepolia.mantle.xyz</code>. <code>Providers.tsx</code> wraps the app in
+  <code>WagmiProvider</code> + <code>QueryClientProvider</code>. (wagmi v3 broke on a barrel-import bug, so
+  the stack is pinned to the stable v2 line.)</p>
+
+  <h3>Network handling</h3>
+  <p><code>Network.tsx</code> centralizes the &ldquo;are we on Mantle?&rdquo; question. <code>useMantleGuard()</code>
+  exposes <code>{ wrongNetwork, switchToMantle }</code>; <code>useAutoSwitchMantle()</code> &mdash; mounted once
+  in the header &mdash; auto-prompts the switch (and the add-chain) the moment a connected wallet is on the
+  wrong chain. <code>WrongNetworkBanner</code> renders above any signing area, and every signing button
+  (<code>Draw</code>, <code>Deposit</code>, <code>Create</code>&hellip;) is disabled while off-chain, so a
+  transaction can never fire on the wrong network and throw a cryptic error.</p>
+
+  <h3>The lender flow</h3>
+  <p><code>LenderPanel.tsx</code> on <code>/vault</code>: connect &rarr; <strong>faucet-mint</strong> test
+  USDC &rarr; approve &rarr; <strong>deposit</strong> &rarr; hold <code>scUSDC</code> &rarr;
+  <strong>withdraw</strong>. Standard ERC-4626, fully user-signed, reading balances through
+  <code>useReadContracts</code> against the minimal ABIs in <code>lib/contracts.ts</code>.</p>
+
+  <h3>The operator-launch stepper</h3>
+  <p><code>OperatorLaunch.tsx</code> on <code>/launch</code> closes the whole loop with the user&rsquo;s
+  wallet:</p>
+  <div class="fig">
+    <div class="flow">
+      <div class="node"><div class="nt">1. Score</div><div class="nd">engine attests<br>(oracle-signed)</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">2. Create account</div><div class="nd">wallet signs<br>factory.createAccount</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node"><div class="nt">3. Open line</div><div class="nd">wallet signs<br>manager.openLine</div></div>
+      <div class="arrow">&rarr;</div>
+      <div class="node ok"><div class="nt">4. Draw</div><div class="nd">wallet signs<br>manager.draw</div></div>
+    </div>
+    <div class="figcap"><b>Figure 18.1</b> &mdash; Step 1 calls <code>/onboard</code> (you can&rsquo;t
+    self-assign reputation); steps 2&ndash;4 are signed by the user&rsquo;s own wallet. The stepper reads the
+    predicted account via <code>factory.predict</code> and borrowing power via
+    <code>manager.borrowingPower</code> before each signature. Verified on-chain end to end via
+    <code>cast</code>: $5,000 borrowing power at T2, $500 landed in the account.</div>
+  </div>
+
+  <p>Because the launched agent&rsquo;s id is derived (<code>100_000 + owner % 900_000</code>) and sits
+  outside the registry&rsquo;s 1&ndash;8 scan, <code>MyAgents.tsx</code> remembers it: <code>lib/myAgents.ts</code>
+  stores the id in <code>localStorage</code> keyed by wallet, and the component reads each agent&rsquo;s live
+  state back <em>from chain</em> by id &mdash; so a refresh never loses an agent you launched. It appears on
+  both <code>/launch</code> and <code>/agents</code>, linking through to its console.</p>
+
+  <div class="callout note">
+    <div class="k">One curve, two languages &mdash; again</div>
+    <p>The frontend never re-implements protocol math. It calls <code>factory.predict</code> for the account
+    address, <code>manager.borrowingPower</code> for the limit, and the shared tier-math mirror for display
+    &mdash; so what the UI shows before a signature is exactly what the contract enforces after it. Honest
+    by construction.</p>
+  </div>
+</section>
+
+<!-- ===================== APPENDIX A ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">A</div>
+    <div class="part-label">Part V &mdash; Reference</div>
+    <h2>The File Map</h2>
+  </div>
+  <p class="lede">A monorepo in three workspaces: the contracts (the truth), the engine (the projection),
+  and the web app (the surface), with a shared package binding them.</p>
+<pre><code class="lang-bash">contracts/                     # Foundry — the spine, the source of truth
+  src/
+    ReputationOracle.sol         R + tier per agentId, engine-signer-gated
+    CreditVault.sol              ERC-4626 lender pool + inflation mitigation
+    CreditManager.sol            tier → limit, open/draw/repay/liquidate, 2-slope interest
+    libraries/
+      TierMath.sol               pure: tier(R), limit(R), caps, collateral factors
+      SpendingGuardLib.sol       the six-check ladder, shared by both account paths
+      SpendDecodeLib.sol         resolves effective dest + amount of a call
+    accounts/
+      GuardedAccount.sol         minimal direct wallet (bundler-independent)
+      GuardedAccountFactory.sol  CREATE2 deploy + predict()
+    modules/
+      SpendingGuardValidator.sol ERC-7579 Type 1 — scoped agent session key
+      SpendingGuardHook.sol      ERC-7579 Type 4 — runs the ladder in preCheck
+  script/Deploy.s.sol            deploys all 7 + seeds the vault
+  deployments/5003.json          canonical Mantle Sepolia addresses
+
+packages/shared/               # TS mirror: tier math, ABIs, config, types
+
+apps/engine/src/               # Node/TS reputation engine (Hono + viem)
+  scoring.ts                     the formula + evidence hash
+  oracle.ts / chain.ts           commit bridge + viem client (batch:false)
+  api.ts                         the HTTP surface (Chapter 9)
+  spend.ts                       live guarded spend (explicit gas → status 0)
+  x402.ts / glm.ts / explain.ts  payments + GLM narration
+  byreal.ts                      live Byreal CLMM context (Solana, read-only)
+  data/mantleOnchain.ts          real Mantle PnL reconstruction
+  registry.ts / indexer.ts       leaderboard scan + event ring buffer
+
+apps/web/                      # Next.js 15 dashboard
+  app/  (page.tsx, console, agents, vault, launch)
+  components/  (Console, ReputationGauge, CreditPanel, TrackRecord,
+                SpendingControls, X402Panel, OnchainPanel, LenderPanel,
+                OperatorLaunch, MyAgents, Network, ConnectButton, StarField, ui)
+  lib/  (api, config, wagmi, contracts, format, myAgents)</code></pre>
+</section>
+
+<!-- ===================== APPENDIX B ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">B</div>
+    <div class="part-label">Part V &mdash; Reference</div>
+    <h2>Deployed Addresses &amp; Environment</h2>
+  </div>
+  <p class="lede">Live on Mantle Sepolia (chainId 5003). Deployer / oracle signer:
+  <code>0x4D6A7d6bF3C0a885D581AacEC0345526bd33273E</code>. Source-verified on Mantlescan.</p>
+  <table>
+    <thead><tr><th>Contract</th><th>Address</th></tr></thead>
+    <tbody>
+      <tr><td>MockUSDC</td><td><code>0xa29799A188C220B17788a355Ec0166523172B09d</code></td></tr>
+      <tr><td>ReputationOracle</td><td><code>0xe00962601106D055be7A1f97CD53c9C7B4b46632</code></td></tr>
+      <tr><td>CreditVault (ERC-4626)</td><td><code>0x0aD20c99D72AA4371317a85A85Ce39C318a2b114</code></td></tr>
+      <tr><td>CreditManager</td><td><code>0x1be497f127561a8F3e53aF53452Ce6cdC09e31a8</code></td></tr>
+      <tr><td>GuardedAccountFactory</td><td><code>0xB1ccd35E453eB0a4eeD05a3AE0BFC638B397B997</code></td></tr>
+      <tr><td>SpendingGuardHook (7579 T4)</td><td><code>0x9A0735F793e438b63241252EB54ef7B519E698Bb</code></td></tr>
+      <tr><td>SpendingGuardValidator (7579 T1)</td><td><code>0x60C3C40566a932bAcA3AfD23699C38e9F0F3E2C3</code></td></tr>
+      <tr><td>Demo GuardedAccount (agent 1)</td><td><code>0xA6f857F91C57f6DaC7BAf5F4A2abfA026A729365</code></td></tr>
+    </tbody>
+  </table>
+  <h4>The verified loop, on-chain (agent 1)</h4>
+  <table>
+    <thead><tr><th>Step</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Reputation commit</td><td>R = 832 &rarr; tier T3</td></tr>
+      <tr><td>Credit line</td><td>borrowing power 37,945 USDC = <code>creditLimit(832)</code></td></tr>
+      <tr><td>Draw</td><td>5,000 USDC disbursed to the guarded account</td></tr>
+      <tr><td>Allowed spend</td><td>1,000 USDC &rarr; allowlisted merchant &nbsp;<span class="green">&#10003; status 1</span></td></tr>
+      <tr><td>Rogue spend</td><td>&rarr; non-allowlisted attacker &nbsp;<span class="red">&#10007; REVERTED, status 0</span></td></tr>
+    </tbody>
+  </table>
+  <h4>Key environment variables</h4>
+  <ul class="tight">
+    <li><code>MANTLE_SEPOLIA_RPC_URL</code>, <code>ENGINE_PORT=8799</code>, <code>DATA_SOURCE=simulated</code></li>
+    <li><code>ORACLE_SIGNER_PRIVATE_KEY</code> &mdash; the engine&rsquo;s commit key (throwaway testnet key only)</li>
+    <li><code>ZAI_API_KEY</code>, <code>ZAI_MODEL=glm-4.5-flash</code> &mdash; GLM narration (optional)</li>
+    <li><code>MANTLESCAN_API_KEY</code>, <code>MANTLE_TRADER_ADDRESS</code> &mdash; on-chain PnL record (optional)</li>
+    <li><code>NEXT_PUBLIC_ENGINE_URL</code>, <code>NEXT_PUBLIC_EXPLORER</code> &mdash; the web app&rsquo;s pointers</li>
+  </ul>
+  <p class="small">The real <code>.env</code> (private key) stays gitignored; only placeholders live in
+  <code>.env.example</code>. Run the stack with
+  <code>ENGINE_PORT=8799 pnpm --filter @swing/engine start</code> +
+  <code>pnpm --filter @swing/web start</code> (web on :3000 reads engine on :8799).</p>
+</section>
+
+<!-- ===================== APPENDIX C ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">C</div>
+    <div class="part-label">Part V &mdash; Reference</div>
+    <h2>The 90-Second Demo Run-of-Show</h2>
+  </div>
+  <p class="lede">The whole loop, told in ninety seconds. The climax is beats 6&ndash;7: the drain that
+  reverts on-chain.</p>
+  <table>
+    <thead><tr><th>#</th><th>On screen</th><th>Beat</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>Landing</td><td>&ldquo;Agents earn trust, capital follows, rogue spends revert. The whole loop on Mantle.&rdquo;</td></tr>
+      <tr><td>1</td><td>Console, agent #1</td><td>ERC-8004 identity + a track record; the engine scores it and commits on-chain.</td></tr>
+      <tr><td>2</td><td>Run a trading session</td><td>It trades; the engine recomputes and commits the update &mdash; a real oracle tx.</td></tr>
+      <tr><td>3</td><td>Credit panel</td><td>Score &rarr; tier &rarr; an <em>uncollateralized</em> limit funded by the ERC-4626 vault.</td></tr>
+      <tr><td>4</td><td>x402 panel</td><td>Another agent buys this one&rsquo;s signal over x402; proof-of-payment loops back as reputation.</td></tr>
+      <tr><td>5</td><td>Spending controls</td><td>&ldquo;Pay merchant&rdquo; &mdash; an allowlisted, in-bounds spend executes (status 1).</td></tr>
+      <tr><td>6</td><td>Spending controls</td><td><strong>&ldquo;Drain to attacker&rdquo;</strong> &mdash; the card shakes red.</td></tr>
+      <tr><td>7</td><td>Mantlescan</td><td>Click the tx &rarr; <span class="red">status 0 (failed)</span>, the guard&rsquo;s typed error, funds never moved.</td></tr>
+      <tr><td>8</td><td>Console</td><td>&ldquo;Identity, reputation, credit, payments, safety &mdash; every step a verifiable Mantle event.&rdquo;</td></tr>
+    </tbody>
+  </table>
+  <p>Beyond the guided demo, the presenter can connect their own wallet and either lend on
+  <code>/vault</code> or launch their own credit-backed agent on <code>/launch</code> &mdash; turning the
+  pitch from &ldquo;watch this work&rdquo; into &ldquo;do it yourself.&rdquo;</p>
+</section>
+
+<!-- ===================== APPENDIX D ===================== -->
+<section class="chapter">
+  <div class="opener">
+    <div class="bignum">D</div>
+    <div class="part-label">Part V &mdash; Reference</div>
+    <h2>Glossary</h2>
+  </div>
+  <table>
+    <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td>ERC-8004</td><td>The &ldquo;trustless agents&rdquo; standard: on-chain registries for agent identity, reputation, and validation. The swing keys reputation by ERC-8004 agentId.</td></tr>
+      <tr><td>ERC-4626</td><td>The tokenized-vault standard. <code>CreditVault</code> is one; lenders deposit and earn yield as borrowers repay interest.</td></tr>
+      <tr><td>ERC-7579</td><td>Modular smart-account standard with typed modules. The swing ships a Type-1 validator and a Type-4 hook for the guard.</td></tr>
+      <tr><td>x402</td><td>The HTTP-402 agent payment rail: a server returns 402 with terms, the client pays on-chain and retries with proof.</td></tr>
+      <tr><td>Tier (T0&ndash;T3)</td><td>Trust bands derived from reputation R, setting credit limit, caps, and collateral. T0 unproven &rarr; T3 trusted.</td></tr>
+      <tr><td>Evidence hash</td><td>A keccak fingerprint of the exact scoring inputs, committed on-chain so a score can be independently recomputed.</td></tr>
+      <tr><td>Rogue-reject</td><td>The signature beat: a policy-breaching spend that mines as a status-0 reverted transaction on Mantle.</td></tr>
+      <tr><td>The numeraire</td><td>Stablecoins (USDC/USDT/&hellip;) used as the unit of account to reconstruct realized PnL from DEX swaps without a price oracle.</td></tr>
+      <tr><td>GuardedAccount</td><td>The minimal, bundler-independent smart wallet that runs the spending guard directly &mdash; the guaranteed demo path.</td></tr>
+      <tr><td>scUSDC</td><td>The ERC-4626 share token a lender receives for depositing USDC into the CreditVault.</td></tr>
+    </tbody>
+  </table>
+  <p class="kicker" style="margin-top:24px;">earn &rarr; reputation &rarr; credit &rarr; deploy &rarr;
+  <span class="red">rogue-reject</span> &mdash; every step a verifiable Mantle event. That is the swing.</p>
+</section>
+
+<script src="highlight.min.js"></script>
+<script src="highlightjs-solidity.min.js"></script>
+<script>
+(function(){
+  var map = { sol:'solidity', ts:'typescript', js:'javascript', bash:'bash', json:'json' };
+  var hljs = window.hljs;
+  document.querySelectorAll('pre code').forEach(function(block){
+    var m = block.className.match(/lang-(\w+)/);
+    var lang = (m && map[m[1]]) || 'plaintext';
+    try {
+      var out = hljs.highlight(block.textContent, { language: lang });
+      block.innerHTML = out.value;
+      block.classList.add('hljs');
+    } catch (e) { /* leave the plain monospace as-is */ }
+  });
+})();
+</script>
+</body>
+</html>

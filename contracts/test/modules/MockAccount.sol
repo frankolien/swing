@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IHook, IValidator, IERC7579Account} from "../../src/modules/interfaces/IERC7579.sol";
+import {IERC7579Account, IHook, IValidator} from "../../src/modules/interfaces/IERC7579.sol";
 
 /// @notice Minimal ERC-7579-style account for module tests: installs a validator + hook and
 ///         wraps single-call execution with the hook's preCheck/postCheck, exactly as Kernel v3

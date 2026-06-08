@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ICreditVault} from "./interfaces/ICreditVault.sol";
 import {IReputationOracle} from "./interfaces/IReputationOracle.sol";
 import {TierMath} from "./libraries/TierMath.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title CreditManager
 /// @notice Opens reputation-tiered credit lines on top of the CreditVault. Reads tier from
@@ -55,9 +55,7 @@ contract CreditManager is Ownable {
 
     event LineOpened(uint256 indexed agentId, address indexed account, uint8 tier, uint256 limit);
     event Drawn(uint256 indexed agentId, address indexed to, uint256 amount, uint256 principal);
-    event Repaid(
-        uint256 indexed agentId, uint256 principal, uint256 interest, uint256 outstanding
-    );
+    event Repaid(uint256 indexed agentId, uint256 principal, uint256 interest, uint256 outstanding);
     event LimitRefreshed(uint256 indexed agentId, uint8 tier, uint256 limit, uint16 aprBps);
     event CollateralPosted(uint256 indexed agentId, uint256 amount, uint256 total);
     event CollateralWithdrawn(uint256 indexed agentId, uint256 amount, uint256 total);
@@ -220,11 +218,7 @@ contract CreditManager is Ownable {
     }
 
     /// @dev How much a tier may borrow with zero collateral — the point of reputation credit.
-    function _uncollateralizedAllowance(uint8 tier, uint256 limit)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _uncollateralizedAllowance(uint8 tier, uint256 limit) internal pure returns (uint256) {
         if (tier == 3) return limit; // under-collateralized: reputation-only
         if (tier == 2) return limit / 2; // partial
         return 0; // T0/T1 must collateralize

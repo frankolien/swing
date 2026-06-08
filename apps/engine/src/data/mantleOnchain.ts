@@ -1,4 +1,4 @@
-import { MANTLESCAN_API_KEY } from "../config.js";
+import { MANTLESCAN_API_KEY, MANTLE_TRADER_LABEL, MANTLE_TRADER_NOTE } from "../config.js";
 import type { ScoreInputs, Trade } from "../scoring.js";
 import type { TradeView, TrackRecord } from "./source.js";
 
@@ -34,6 +34,7 @@ export interface OnchainTrade {
 export interface OnchainRecord {
   address: string;
   venue: string;
+  provenance: { label: string; note: string }; // honest framing of where this record comes from
   fetchedAt: number;
   summary: {
     swaps: number;
@@ -178,6 +179,7 @@ export async function buildOnchainRecord(address: string, now: number): Promise<
   return {
     address,
     venue: "Merchant Moe · Agni · Mantle",
+    provenance: { label: MANTLE_TRADER_LABEL, note: MANTLE_TRADER_NOTE },
     fetchedAt: now,
     summary: {
       swaps: swapHashes.size,

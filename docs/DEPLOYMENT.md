@@ -1,20 +1,22 @@
 # Live deployment — Mantle Sepolia (chainId 5003)
 
-Deployed 2026-06-05. Deployer / oracle signer: `0x4D6A7d6bF3C0a885D581AacEC0345526bd33273E`.
-Explorer: https://explorer.sepolia.mantle.xyz · https://sepolia.mantlescan.xyz
+Redeployed 2026-06-07 with the **2-of-3 committee ReputationOracle**. Deployer / owner:
+`0x4D6A7d6bF3C0a885D581AacEC0345526bd33273E`. Oracle committee (threshold 2):
+`0x5ce5E9FE1705dA5A26F3bfC3BA56Dd6a02164720`, `0x931Cca571AdaE525D33Db36c78727B9Ec99C662a`,
+and the deployer. Explorer: https://explorer.sepolia.mantle.xyz · https://sepolia.mantlescan.xyz
 
 ## Contracts
 
 | Contract | Address |
 |---|---|
-| MockUSDC (vault asset / faucet) | [`0xDA9430BE1F57CAcB96951888DD757a1Af7953dBa`](https://explorer.sepolia.mantle.xyz/address/0xDA9430BE1F57CAcB96951888DD757a1Af7953dBa) |
-| ReputationOracle | [`0xAd480D894c734D71d2A1FD9a7Da802131D3c1617`](https://explorer.sepolia.mantle.xyz/address/0xAd480D894c734D71d2A1FD9a7Da802131D3c1617) |
-| CreditVault (ERC-4626) | [`0x4DC35935403f683Bcab4c34519756C8458654344`](https://explorer.sepolia.mantle.xyz/address/0x4DC35935403f683Bcab4c34519756C8458654344) |
-| CreditManager | [`0x742929798a121F043B629e98647060b18db369c3`](https://explorer.sepolia.mantle.xyz/address/0x742929798a121F043B629e98647060b18db369c3) |
-| GuardedAccountFactory | [`0x5bd77f46D4c557358409Ca47e8c79A7A3eA4bd44`](https://explorer.sepolia.mantle.xyz/address/0x5bd77f46D4c557358409Ca47e8c79A7A3eA4bd44) |
-| SpendingGuardHook (ERC-7579 T4) | [`0xd679EAdad555F0c3b9083e52c2C79f99b713D224`](https://explorer.sepolia.mantle.xyz/address/0xd679EAdad555F0c3b9083e52c2C79f99b713D224) |
-| SpendingGuardValidator (ERC-7579 T1) | [`0xa0DDd52B925c893aD6Af3Ba3cCc560cA362aa19c`](https://explorer.sepolia.mantle.xyz/address/0xa0DDd52B925c893aD6Af3Ba3cCc560cA362aa19c) |
-| Demo GuardedAccount (agentId 1) | [`0x1A1960bAc3C0852De7De2e5507C7AA1345Bc1C71`](https://explorer.sepolia.mantle.xyz/address/0x1A1960bAc3C0852De7De2e5507C7AA1345Bc1C71) |
+| MockUSDC (vault asset / faucet) | [`0xa29799A188C220B17788a355Ec0166523172B09d`](https://explorer.sepolia.mantle.xyz/address/0xa29799A188C220B17788a355Ec0166523172B09d) |
+| ReputationOracle (2-of-3 committee) | [`0xe00962601106D055be7A1f97CD53c9C7B4b46632`](https://explorer.sepolia.mantle.xyz/address/0xe00962601106D055be7A1f97CD53c9C7B4b46632) |
+| CreditVault (ERC-4626) | [`0x0aD20c99D72AA4371317a85A85Ce39C318a2b114`](https://explorer.sepolia.mantle.xyz/address/0x0aD20c99D72AA4371317a85A85Ce39C318a2b114) |
+| CreditManager | [`0x1be497f127561a8F3e53aF53452Ce6cdC09e31a8`](https://explorer.sepolia.mantle.xyz/address/0x1be497f127561a8F3e53aF53452Ce6cdC09e31a8) |
+| GuardedAccountFactory | [`0xB1ccd35E453eB0a4eeD05a3AE0BFC638B397B997`](https://explorer.sepolia.mantle.xyz/address/0xB1ccd35E453eB0a4eeD05a3AE0BFC638B397B997) |
+| SpendingGuardHook (ERC-7579 T4) | [`0x9A0735F793e438b63241252EB54ef7B519E698Bb`](https://explorer.sepolia.mantle.xyz/address/0x9A0735F793e438b63241252EB54ef7B519E698Bb) |
+| SpendingGuardValidator (ERC-7579 T1) | [`0x60C3C40566a932bAcA3AfD23699C38e9F0F3E2C3`](https://explorer.sepolia.mantle.xyz/address/0x60C3C40566a932bAcA3AfD23699C38e9F0F3E2C3) |
+| Demo GuardedAccount (agentId 1) | [`0xA6f857F91C57f6DaC7BAf5F4A2abfA026A729365`](https://explorer.sepolia.mantle.xyz/address/0xA6f857F91C57f6DaC7BAf5F4A2abfA026A729365) |
 
 Vault seeded with 100,001 USDC liquidity (incl. dead-shares). Canonical record: `contracts/deployments/5003.json`.
 
@@ -24,23 +26,25 @@ The full north-star sequence, executed on-chain for agentId 1:
 
 | Step | Result | Tx |
 |---|---|---|
-| 1. Reputation commit | `R = 800` → tier **T3 (Trusted)** | [`0xf100c046…49a4ef`](https://explorer.sepolia.mantle.xyz/tx/0xf100c0467edcbbf3647cbe1dcccc64d745e6c96e374c7a4c561026004849a4ef) |
-| 2. Credit line | borrowing power **35,777 USDC** = `creditLimit(800)` | (read) |
-| 3. Draw | **5,000 USDC** disbursed to the guarded account | [`0x82f672ff…26aef12`](https://explorer.sepolia.mantle.xyz/tx/0x82f672fff56d3e5a861b50f1eb3c51c1ed59fc1bb5b9fdd94b0085b5a26aef12) |
-| 4. Allowed spend | **1,000 USDC** → allowlisted merchant ✅ | [`0x589a730a…d6cae8`](https://explorer.sepolia.mantle.xyz/tx/0x589a730ad98734d85de0b701177e2086afcb8887c71d416e5933c7cdc2d6cae8) |
-| 5. **Rogue spend** | → non-allowlisted attacker → **REVERTED on-chain** (`status 0`, block 39548642), attacker balance `0` | [`0x0ec58c2f…34ced2`](https://explorer.sepolia.mantle.xyz/tx/0x0ec58c2f015116ad89fcb558aa8e429ceefac2c20edd7ce2c28bdab26734ced2) |
+| 1. Reputation commit | `R = 832` → tier **T3 (Trusted)**, via the **2-of-3 committee** | [`0x731c624f…b83dc`](https://explorer.sepolia.mantle.xyz/tx/0x731c624fb9b1e3dfd32bbb6e41b3ad45924d5510587ebfb2b7e300ccdf5b83dc) |
+| 2. Credit line | borrowing power **37,945 USDC** = `creditLimit(832)` | [`0xcb3ec6f5…bf265`](https://explorer.sepolia.mantle.xyz/tx/0xcb3ec6f549293339f92b6c0398af3b216f5853562606986c622ea8fc7c9bf265) |
+| 3. Draw | **5,000 USDC** disbursed to the guarded account | [`0xb0746f28…11e9c`](https://explorer.sepolia.mantle.xyz/tx/0xb0746f283819fa9dcee92a52013c6d57cbf014f290a60e30f6320e8ae7611e9c) |
+| 4. Allowed spend | **1,000 USDC** → allowlisted merchant ✅ | [`0x9147444b…2f8a2`](https://explorer.sepolia.mantle.xyz/tx/0x9147444b664c4a67c5803569269ff0147ea9d169ac51e38a5b34a057fad2f8a2) |
+| 5. **Rogue spend** | → non-allowlisted attacker → **REVERTED on-chain** (`status 0`), attacker balance `0` | [`0x16d6faaf…35ff7`](https://explorer.sepolia.mantle.xyz/tx/0x16d6faaff4087db6fe47647cc563bb75114f90dd6a02a856f8f86ce1f5335ff7) |
 
 Step 5 is the prize beat: a real, mined, failed transaction on the Mantle explorer — the
 `SpendingGuard` rejecting a drain attempt. `earn → reputation → credit → deploy → safety`,
 fully verifiable.
 
 ## Notes
-- Deploys were done contract-by-contract via `forge create` (the sandboxed `forge script`
-  fork backend couldn't hold a stable connection to the public RPC; single sequential txs are
-  reliable). Re-deploying from a normal terminal can use `forge script script/Deploy.s.sol
-  --broadcast` for a single-command deploy + `deployments/5003.json`.
-- **Source verification on mantlescan** is still TODO — needs a (free) mantlescan API key in
-  `MANTLESCAN_API_KEY`, then `forge verify-contract <addr> <Contract> --chain 5003`.
+- The committee redeploy used a single-command `forge script script/Deploy.s.sol --broadcast
+  --slow` (the `--slow` flag sends one tx at a time, which is reliable on the public RPC) and
+  rewrote `deployments/5003.json`. Set `ORACLE_SIGNER_2`/`ORACLE_SIGNER_3` + `ORACLE_THRESHOLD=2`
+  for the 2-of-3; the engine signs commits with `ORACLE_SIGNER_KEYS` and auto-detects the oracle.
+- **Source verified on Mantlescan** — all 7 contracts, via the Etherscan V2 unified endpoint
+  (`--verifier-url "https://api.etherscan.io/v2/api?chainid=5003"`, `MANTLESCAN_API_KEY`). The
+  committee `ReputationOracle` verified with its `(address[],uint256)` constructor args; the
+  others matched by bytecode. Source viewable at `sepolia.mantlescan.xyz/address/<addr>#code`.
 - MockUSDC has an open `mint` — it's the demo faucet token. Swap for a real Mantle asset
   (USDC/USDY) for a mainnet build.
 
@@ -65,5 +69,6 @@ Engine-driven demo (agentId 2, simulated source — each step a real commit tx):
 | earn | 775 | T3 | |
 
 Final on-chain: `scoreOf(2)=775`, `tierOf(2)=3`. Every commit carries an `evidenceHash` binding it
-to the exact inputs (recomputable/auditable). NL explanations are templated now; swap for Z.ai GLM
-behind `explainScore()`.
+to the exact inputs (recomputable/auditable). NL explanations are **live via Z.ai GLM**
+(`glm-4.5-flash`, `/health` → `explainer: glm`), with the deterministic template as a silent
+fallback on missing key / provider error.

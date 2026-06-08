@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Script, console2} from "forge-std/Script.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ReputationOracle} from "../src/ReputationOracle.sol";
-import {IReputationOracle} from "../src/interfaces/IReputationOracle.sol";
-import {CreditVault} from "../src/CreditVault.sol";
-import {ICreditVault} from "../src/interfaces/ICreditVault.sol";
 import {CreditManager} from "../src/CreditManager.sol";
+import {CreditVault} from "../src/CreditVault.sol";
+import {ReputationOracle} from "../src/ReputationOracle.sol";
 import {GuardedAccountFactory} from "../src/accounts/GuardedAccountFactory.sol";
+import {ICreditVault} from "../src/interfaces/ICreditVault.sol";
+import {IReputationOracle} from "../src/interfaces/IReputationOracle.sol";
 import {SpendingGuardHook} from "../src/modules/SpendingGuardHook.sol";
 import {SpendingGuardValidator} from "../src/modules/SpendingGuardValidator.sol";
 import {MockUSDC} from "../test/mocks/MockUSDC.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Script, console2} from "forge-std/Script.sol";
 
 /// @notice Deploys the swing spine to Mantle Sepolia and seeds the vault. ERC-8004 singletons
 ///         are integrated by address off-chain (the engine), not deployed here.
@@ -23,13 +23,23 @@ contract Deploy is Script {
         address deployer = vm.addr(pk);
         address oracleSigner = vm.envOr("ORACLE_SIGNER_ADDRESS", deployer);
 
+        // Reputation signer committee. Defaults to a 1-of-1 (the engine signer) so the dev flow
+        // is unchanged; set ORACLE_SIGNER_2 / ORACLE_SIGNER_3 + ORACLE_THRESHOLD (e.g. 2) for a
+        // 2-of-3 quorum so no single key can fabricate a score.
+        address[] memory signers = _committee(
+            oracleSigner,
+            vm.envOr("ORACLE_SIGNER_2", address(0)),
+            vm.envOr("ORACLE_SIGNER_3", address(0))
+        );
+        uint256 threshold = vm.envOr("ORACLE_THRESHOLD", uint256(1));
+
         vm.startBroadcast(pk);
 
         // Demo asset: a mintable 6-decimal USDC we control on testnet. Swap for a real
         // Mantle token by setting VAULT_ASSET_ADDRESS once pinned + verified.
         MockUSDC usdc = new MockUSDC();
 
-        ReputationOracle oracle = new ReputationOracle(oracleSigner);
+        ReputationOracle oracle = new ReputationOracle(signers, threshold);
         CreditVault vault = new CreditVault(IERC20(address(usdc)), "Swing Credit USDC", "scUSDC");
         CreditManager manager =
             new CreditManager(IReputationOracle(address(oracle)), ICreditVault(address(vault)));
@@ -58,6 +68,8 @@ contract Deploy is Script {
         console2.log("SpendingGuardHook ", address(hook));
         console2.log("SpendingGuardVal  ", address(validator));
         console2.log("oracleSigner      ", oracleSigner);
+        console2.log("oracle committee  ", oracle.signerCount());
+        console2.log("oracle threshold  ", oracle.threshold());
 
         D memory d = D({
             usdc: address(usdc),
@@ -69,6 +81,20 @@ contract Deploy is Script {
             validator: address(validator)
         });
         _writeDeployments(d);
+    }
+
+    /// @dev Assemble the committee from up to three addresses, dropping zeros. The first is
+    ///      always present (the engine signer); extras enable a k-of-n quorum.
+    function _committee(address a, address b, address c) internal pure returns (address[] memory) {
+        uint256 n = 1;
+        if (b != address(0)) ++n;
+        if (c != address(0)) ++n;
+        address[] memory out = new address[](n);
+        out[0] = a;
+        uint256 i = 1;
+        if (b != address(0)) out[i++] = b;
+        if (c != address(0)) out[i] = c;
+        return out;
     }
 
     struct D {

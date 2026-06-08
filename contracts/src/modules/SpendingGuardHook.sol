@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {
-    IHook,
-    IERC7579Account,
-    MODULE_TYPE_HOOK
-} from "./interfaces/IERC7579.sol";
-import {SpendingGuardLib} from "../libraries/SpendingGuardLib.sol";
 import {SpendDecodeLib} from "../libraries/SpendDecodeLib.sol";
+import {SpendingGuardLib} from "../libraries/SpendingGuardLib.sol";
+import {IERC7579Account, IHook, MODULE_TYPE_HOOK} from "./interfaces/IERC7579.sol";
 
 /// @title SpendingGuardHook
 /// @notice ERC-7579 Type-4 hook enforcing the six-check ladder during execution. On a breach it
@@ -38,7 +34,8 @@ contract SpendingGuardHook is IHook {
         (uint256 perTxCap, uint256 dailyLimit, address[] memory dests) =
             abi.decode(data, (uint256, uint256, address[]));
         GuardStore storage gs = _store[msg.sender];
-        gs.config = SpendingGuardLib.Config({perTxCap: perTxCap, dailyLimit: dailyLimit, frozen: false});
+        gs.config =
+            SpendingGuardLib.Config({perTxCap: perTxCap, dailyLimit: dailyLimit, frozen: false});
         gs.window.start = uint64(block.timestamp);
         for (uint256 i; i < dests.length; ++i) {
             gs.allowedDest[dests[i]] = true;
@@ -65,12 +62,10 @@ contract SpendingGuardHook is IHook {
 
     // ── hook ──────────────────────────────────────────────────────────────────────
 
-    function preCheck(address, uint256, bytes calldata msgData)
-        external
-        returns (bytes memory)
-    {
+    function preCheck(address, uint256, bytes calldata msgData) external returns (bytes memory) {
         GuardStore storage gs = _store[msg.sender];
-        (bool ok, address target, uint256 value, bytes calldata inner) = _parseSingleExecute(msgData);
+        (bool ok, address target, uint256 value, bytes calldata inner) =
+            _parseSingleExecute(msgData);
         if (ok) {
             (address dest, uint256 amount,) = SpendDecodeLib.decodeSpend(target, value, inner);
             SpendingGuardLib.enforce(

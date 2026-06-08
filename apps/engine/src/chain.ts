@@ -15,7 +15,7 @@ import {
   guardedAccountAbi,
   mockUsdcAbi,
 } from "@swing/shared/abis";
-import { RPC_URL, SIGNER_KEY, deployment } from "./config.js";
+import { RPC_URL, SIGNER_KEY, ORACLE_SIGNER_KEYS, deployment } from "./config.js";
 
 // batch:false is deliberate — the public Mantle RPC refuses viem's default concurrent
 // batched requests (same failure that breaks `forge script`'s fork backend). Sequential
@@ -33,6 +33,12 @@ export const account = SIGNER_KEY ? privateKeyToAccount(SIGNER_KEY) : undefined;
 export const walletClient = account
   ? createWalletClient({ account, chain: mantleSepoliaTestnet, transport })
   : undefined;
+
+// The reputation signer committee the engine can sign with. Defaults to the single SIGNER_KEY
+// (a 1-of-1) unless ORACLE_SIGNER_KEYS provides a quorum's worth of keys.
+export const committeeAccounts = (
+  ORACLE_SIGNER_KEYS.length ? ORACLE_SIGNER_KEYS : SIGNER_KEY ? [SIGNER_KEY] : []
+).map((k) => privateKeyToAccount(k));
 
 export const addresses = deployment;
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test} from "forge-std/Test.sol";
-import {GuardedAccountFactory} from "../src/accounts/GuardedAccountFactory.sol";
 import {GuardedAccount} from "../src/accounts/GuardedAccount.sol";
+import {GuardedAccountFactory} from "../src/accounts/GuardedAccountFactory.sol";
 import {SpendingGuardLib} from "../src/libraries/SpendingGuardLib.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract GuardedAccountFactoryTest is Test {
     GuardedAccountFactory factory;

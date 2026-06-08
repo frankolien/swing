@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {SpendingGuardLib} from "../libraries/SpendingGuardLib.sol";
 import {SpendDecodeLib} from "../libraries/SpendDecodeLib.sol";
+import {SpendingGuardLib} from "../libraries/SpendingGuardLib.sol";
 
 /// @title GuardedAccount
 /// @notice A minimal smart-contract wallet that holds drawn capital and runs the

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test} from "forge-std/Test.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {GuardedAccount} from "../src/accounts/GuardedAccount.sol";
 import {SpendingGuardLib} from "../src/libraries/SpendingGuardLib.sol";
 import {MockUSDC} from "./mocks/MockUSDC.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Test} from "forge-std/Test.sol";
 
 /// @notice The rogue-tx revert beat, AA-independent. Exercises every rung of the ladder:
 ///         frozen -> destination -> per-tx cap -> rolling daily window.
@@ -24,7 +24,9 @@ contract GuardedAccountTest is Test {
     function setUp() public {
         usdc = new MockUSDC();
         acct = new GuardedAccount(
-            owner, agent, SpendingGuardLib.Config({perTxCap: PER_TX, dailyLimit: DAILY, frozen: false})
+            owner,
+            agent,
+            SpendingGuardLib.Config({perTxCap: PER_TX, dailyLimit: DAILY, frozen: false})
         );
         vm.prank(owner);
         acct.setAllowedDest(merchant, true);
@@ -71,7 +73,9 @@ contract GuardedAccountTest is Test {
         acct.execute(address(usdc), 0, _transfer(merchant, 2_000e6));
         acct.execute(address(usdc), 0, _transfer(merchant, 2_000e6)); // window = 4,000
         vm.expectRevert(
-            abi.encodeWithSelector(SpendingGuardLib.DailyLimitExceeded.selector, DAILY, 4_000e6, 2_000e6)
+            abi.encodeWithSelector(
+                SpendingGuardLib.DailyLimitExceeded.selector, DAILY, 4_000e6, 2_000e6
+            )
         );
         acct.execute(address(usdc), 0, _transfer(merchant, 2_000e6)); // would be 6,000 > 5,000
         vm.stopPrank();
