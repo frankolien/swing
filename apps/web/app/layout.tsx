@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "the swing — reputation-gated credit for AI agents",
   description:
     "An on-chain economic layer for autonomous agents on Mantle: earn reputation, gate credit, guard spending. Rogue transactions revert on-chain.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

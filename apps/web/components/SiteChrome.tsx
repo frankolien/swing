@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpRight, Menu, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -18,8 +19,8 @@ const LINKS = [
 export function Wordmark() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <span className="grid h-7 w-7 place-items-center rounded-[7px] border border-line-strong">
-        <span className="h-2.5 w-2.5 rounded-[2px] bg-ink" />
+      <span className="grid h-12 w-12 place-items-center rounded-[7px] border border-line-strong bg-white/5">
+        <Image src="/swing_logo.png" alt="The Swing logo" width={30} height={30} className="object-contain" />
       </span>
       <span className="font-display text-lg font-semibold tracking-tight text-ink">the swing</span>
     </Link>
@@ -42,9 +43,8 @@ export function SiteHeader({ engineUp }: { engineUp?: boolean | null }) {
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    active ? "text-ink" : "text-faint hover:text-muted"
-                  }`}
+                  className={`rounded-md px-3 py-1.5 text-sm transition-colors ${active ? "text-ink" : "text-faint hover:text-muted"
+                    }`}
                 >
                   {l.label}
                 </Link>
@@ -75,7 +75,7 @@ export function SiteHeader({ engineUp }: { engineUp?: boolean | null }) {
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            
+
           </div>
         </div>
       </header>
@@ -94,9 +94,8 @@ export function SiteHeader({ engineUp }: { engineUp?: boolean | null }) {
                   key={l.href}
                   href={l.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`rounded-md px-4 py-3 text-base transition-colors ${
-                    active ? "text-ink bg-card-2" : "text-faint hover:text-muted"
-                  }`}
+                  className={`rounded-md px-4 py-3 text-base transition-colors ${active ? "text-ink bg-card-2" : "text-faint hover:text-muted"
+                    }`}
                 >
                   {l.label}
                 </Link>
@@ -111,12 +110,21 @@ export function SiteHeader({ engineUp }: { engineUp?: boolean | null }) {
 
 export function SiteFooter() {
   return (
-    <footer className="mx-auto flex max-w-6xl flex-col items-center gap-1.5 px-6 pt-10 pb-12 text-center text-xs text-faint">
-      <div>
-        earn → reputation → credit → deploy → <span className="text-danger">rogue-reject</span> · every step a
-        verifiable Mantle event
+    <footer className="overflow-hidden w-full bg-paper/60 pt-16 text-center text-xs text-faint">
+
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-1.5 px-6 z-10">
+        <div>
+          earn → reputation → credit → deploy → <span className="text-danger">rogue-reject</span> · every step a
+          verifiable Mantle event
+        </div>
+        <div>Turing Test Hackathon 2026 · Mantle × Bybit × Byreal × BGA</div>
       </div>
-      <div>Turing Test Hackathon 2026 · Mantle × Bybit × Byreal × BGA</div>
+
+      <div className="pointer-events-none inset-x-0 -z-10 w-full">
+        <p className="w-full whitespace-nowrap text-center font-display text-[clamp(5rem,20vw,14rem)] font-black uppercase tracking-[-0.02em] text-ink/10">
+          The Swing
+        </p>
+      </div> 
     </footer>
   );
 }
