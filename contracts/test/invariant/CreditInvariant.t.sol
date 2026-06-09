@@ -8,7 +8,9 @@ import {ICreditVault} from "../../src/interfaces/ICreditVault.sol";
 import {IReputationOracle} from "../../src/interfaces/IReputationOracle.sol";
 import {MockUSDC} from "../mocks/MockUSDC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {
+    MessageHashUtils
+} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
 import {Test} from "forge-std/Test.sol";
 
@@ -36,11 +38,15 @@ contract CreditHandler is Test {
     }
 
     function postCollateral(uint256 amount) external {
-        try manager.postCollateral(AGENT, bound(amount, 0, 50_000e6)) {} catch {}
+        try
+            manager.postCollateral(AGENT, bound(amount, 0, 50_000e6))
+        {} catch {}
     }
 
     function withdrawCollateral(uint256 amount) external {
-        try manager.withdrawCollateral(AGENT, bound(amount, 0, 50_000e6)) {} catch {}
+        try
+            manager.withdrawCollateral(AGENT, bound(amount, 0, 50_000e6))
+        {} catch {}
     }
 
     function passTime(uint256 dt) external {
@@ -64,9 +70,15 @@ contract CreditInvariant is StdInvariant, Test {
         address[] memory signers = new address[](1);
         signers[0] = signer;
         oracle = new ReputationOracle(signers, 1);
-        vault = new CreditVault(IERC20(address(usdc)), "Swing Credit USDC", "scUSDC");
-        manager =
-            new CreditManager(IReputationOracle(address(oracle)), ICreditVault(address(vault)));
+        vault = new CreditVault(
+            IERC20(address(usdc)),
+            "Swing Credit USDC",
+            "scUSDC"
+        );
+        manager = new CreditManager(
+            IReputationOracle(address(oracle)),
+            ICreditVault(address(vault))
+        );
         vault.setCreditManager(address(manager));
 
         // lender liquidity
@@ -88,8 +100,9 @@ contract CreditInvariant is StdInvariant, Test {
 
     function _commit(uint256 signerPk, uint16 score) internal {
         bytes32 evi = bytes32(0);
-        bytes32 ethHash =
-            MessageHashUtils.toEthSignedMessageHash(oracle.commitDigest(AGENT, score, evi));
+        bytes32 ethHash = MessageHashUtils.toEthSignedMessageHash(
+            oracle.commitDigest(AGENT, score, evi)
+        );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPk, ethHash);
         bytes[] memory sigs = new bytes[](1);
         sigs[0] = abi.encodePacked(r, s, v);
@@ -110,6 +123,9 @@ contract CreditInvariant is StdInvariant, Test {
 
     /// Vault accounting identity holds through every draw/repay/writeoff.
     function invariant_vaultAccountingIdentity() public view {
-        assertEq(vault.totalAssets(), vault.availableLiquidity() + vault.totalBorrowed());
+        assertEq(
+            vault.totalAssets(),
+            vault.availableLiquidity() + vault.totalBorrowed()
+        );
     }
 }
