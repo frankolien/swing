@@ -8,7 +8,8 @@ import { account } from "./chain.js";
 startIndexer();
 startRegistry();
 
-serve({ fetch: app.fetch, port: PORT }, () => {
+// bind 0.0.0.0 so container platforms (Railway/Render) can route to it, not just loopback.
+serve({ fetch: app.fetch, port: PORT, hostname: "0.0.0.0" }, () => {
   console.log(
     `[swing engine] :${PORT}  chain=${CHAIN_ID}  signer=${account?.address ?? "NONE — set ORACLE_SIGNER_PRIVATE_KEY"}`
   );

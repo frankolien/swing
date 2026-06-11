@@ -12,7 +12,8 @@ loadEnv({ path: resolve(repoRoot, ".env") });
 
 export const CHAIN_ID = Number(process.env.MANTLE_SEPOLIA_CHAIN_ID ?? 5003);
 export const RPC_URL = process.env.MANTLE_SEPOLIA_RPC_URL ?? "https://rpc.sepolia.mantle.xyz";
-export const PORT = Number(process.env.ENGINE_PORT ?? 8787);
+// Railway (and most PaaS) inject the listen port as PORT; ENGINE_PORT is our local override.
+export const PORT = Number(process.env.PORT ?? process.env.ENGINE_PORT ?? 8787);
 export const DATA_SOURCE = process.env.DATA_SOURCE ?? "simulated";
 
 // Verified on-chain Mantle trading: we read a real trader's DEX swaps (Merchant Moe / Agni on
