@@ -35,3 +35,4 @@ coverage/
 
 
 docs/*.pdf
+.vercel

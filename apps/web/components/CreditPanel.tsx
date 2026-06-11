@@ -10,7 +10,7 @@ import { TierLadder } from "./TierLadder";
 function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div>
-      <Label>{label}</Label>
+      <Label className="leading-tight min-h-[2.6em] sm:min-h-0">{label}</Label>
       <div className={`mt-1 tnum text-lg ${accent ? "text-accent" : "text-ink"}`}>{value}</div>
     </div>
   );

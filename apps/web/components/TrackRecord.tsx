@@ -102,7 +102,7 @@ export function TrackRecord({ track }: { track: Track | null }) {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <Label>{label}</Label>
+      <Label className="leading-tight min-h-[2.6em] sm:min-h-0">{label}</Label>
       <div className="mt-1 tnum text-base text-ink">{value}</div>
     </div>
   );
